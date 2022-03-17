@@ -1,0 +1,31 @@
+services:
+  node-red:
+   extends:
+     file: node-red/node-red.yml
+     service: node-red
+
+  transmission:
+    extends:
+      file: transmission/transmission.yml
+      service: transmission
+
+  homebridge:
+    extends:
+      file: homebridge/homebridge.yml
+      service: homebridge
+
+  pi-hole:
+    extends:
+      file: pi-hole/pi-hole.yml
+      service: pihole
+
+  plex:
+    extends:
+      file: plex/plex.yml
+      service: plex
+
+volumes:
+  node-red-data:
+
+networks:
+  node-red-net:
