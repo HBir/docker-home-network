@@ -1,75 +1,157 @@
+version: '3.7'
 services:
   node-red:
-    extends:
-      file: node-red/node-red.yml
-      service: node-red
+    container_name: nodered
+    image: nodered/node-red:latest
+    environment:
+      - TZ=Europe/Stockholm
     ports:
       - "1880:1880"
+    networks:
+      - node-red-net
+    volumes:
+      - ./node-red/data:/data
+      - ./node-red/.ssh:/usr/src/node-red/.ssh # Need ssh keys here
+    extra_hosts:
+      host.docker.internal: host-gateway
+    restart: unless-stopped
 
   transmission:
-    extends:
-      file: transmission/transmission.yml
-      service: transmission
+    image: lscr.io/linuxserver/transmission
+    container_name: transmission
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Stockholm
+      - TRANSMISSION_WEB_HOME=/combustion-release/ #optional
+      - VIRTUAL_HOST=transmission.local
+      - VIRTUAL_PORT=9091
+      # - WHITELIST=iplist #optional
+      # - PEERPORT=peerport #optional
+      # - HOST_WHITELIST=dnsnane list #optional
+    volumes:
+      - ./transmission/config:/config
+      - /mnt/usb/Torrents:/downloads
+      - /mnt/usb/Server/Watch:/watch
     ports:
       - 9091:9091
       - 51413:51413
       - 51413:51413/udp
+    restart: unless-stopped
 
-  homebridge:
-    extends:
-      file: homebridge/homebridge.yml
-      service: homebridge
-    # Port: 8581
+  # homebridge:
+  #   container_name: homebridge
+  #   image: oznu/homebridge:ubuntu
+  #   restart: always
+  #   network_mode: host # Port: 8581
+  #   environment:
+  #     - PGID=1000
+  #     - PUID=1000
+  #     - HOMEBRIDGE_CONFIG_UI=1
+  #     - HOMEBRIDGE_CONFIG_UI_PORT=8581
+  #     - TZ=Europe/Stockholm
+  #   volumes:
+  #     - ./homebridge/volumes/homebridge:/homebridge
 
 
-  pi-hole:
-    extends:
-      file: pi-hole/pi-hole.yml
-      service: pihole
-    # depends_on:
-    #   - dhcphelper
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    # For DHCP it is recommended to remove these ports and instead add: network_mode: "host"
     ports:
       - "53:53/tcp"
       - "53:53/udp"
       - "67:67/udp"
       - "81:80/tcp"
-
-  # dhcphelper:
-  #   extends:
-  #     file: pi-hole/pi-hole.yml
-  #     service: dhcphelper
+    environment:
+      TZ: 'Europe/Stockholm'
+      # WEBPASSWORD: 'set a secure password here or it will be random'
+    # Volumes store your data between container upgrades
+    volumes:
+      - './pi-hole/etc-pihole:/etc/pihole'
+      - './pi-hole/etc-dnsmasq.d:/etc/dnsmasq.d'
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped # Recommended but not required (DHCP needs NET_ADMIN)
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hello.rule=Path(`/`)"
+      - "traefik.http.routers.hello.entrypoints=web"
 
   plex:
-    extends:
-      file: plex/plex.yml
-      service: plex
-    # Port: 32400
+    image: lscr.io/linuxserver/plex
+    container_name: plex
+    network_mode: host # Port: 32400
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - VERSION=docker
+      - PLEX_CLAIM=claim-Lwd_4B5E2yBV2hc-Gvxc #optional
+    volumes:
+      - ./plex/config:/config
+      - /mnt/usb/Server/Music:/music
+      - /mnt/usb/Server/TV series:/tv
+      - /mnt/usb/Server/Movies:/movies
+      - /mnt/usb/Server/Audiobooks:/audiobooks
+      - /mnt/usb/Server/Other:/other
+      - /mnt/usb/Torrents/complete:/new_dl
+
+    restart: unless-stopped
+
 
   hello:
-    extends:
-      file: hello/hello.yml
-      service: hello
-    ports:
-      - 8082:80
+    image: nginxdemos/hello
+    container_name: hello
+    labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.hello.rule=Path(`/hello`)"
+    - "traefik.http.routers.hello.entrypoints=web"
+    - "traefik.http.routers.hello.rule=Host(hello.traefik.local)"
 
   # traefik:
-  #   extends:
-  #     file: traefik/traefik.yml
-  #     service: traefik
+  #   image: "traefik:v2.6"
+  #   container_name: "traefik"
+  #   command:
+  #     - "--api.insecure=true"
+  #     - "--providers.docker=true"
+  #     - "--providers.docker.exposedbydefault=true"
+  #     - "--entrypoints.web.address=:80"
   #   ports:
   #     - "80:80"
-  #     - "8080:8080"
+  #   volumes:
+  #     - "/var/run/docker.sock:/var/run/docker.sock:ro"
+  #   networks:
+  #     - lan
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.api.rule=Host(`traefik.local`)"
+  #     - "traefik.http.routers.api.service=api@internal"
+  #     - "traefik.http.routers.api.entrypoints=web"
 
+  # nginx:
+  #   image: nginx
+  #   volumes:
+  #   - ./nginx/templates:/etc/nginx/templates
+  #   ports:
+  #   - "8081:80"
+  #   environment:
+  #   - NGINX_HOST=pi
+  #   - NGINX_PORT=80
+
+  # openvpn-client
+
+  # wireguard
 
 volumes:
   node-red-data:
 
 networks:
   node-red-net:
-  lan:
-    external: true
-  backend:
-    ipam:
-      config:
-        - subnet: 172.31.0.0/16
+  # lan:
+  #   external: true
+  # backend:
+  #   ipam:
+  #     config:
+  #       - subnet: 172.31.0.0/16
 
