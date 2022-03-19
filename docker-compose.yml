@@ -1,5 +1,8 @@
 version: '3.7'
 services:
+  # ---------------------------------------------------------------------------- #
+  #                                   Node-Red                                   #
+  # ---------------------------------------------------------------------------- #
   node-red:
     container_name: nodered
     image: nodered/node-red:latest
@@ -16,6 +19,9 @@ services:
       host.docker.internal: host-gateway
     restart: unless-stopped
 
+  # ---------------------------------------------------------------------------- #
+  #                                 Transmission                                 #
+  # ---------------------------------------------------------------------------- #
   transmission:
     image: lscr.io/linuxserver/transmission
     container_name: transmission
@@ -39,6 +45,9 @@ services:
       - 51413:51413/udp
     restart: unless-stopped
 
+  # ---------------------------------------------------------------------------- #
+  #                                  Homebridge                                  #
+  # ---------------------------------------------------------------------------- #
   # homebridge:
   #   container_name: homebridge
   #   image: oznu/homebridge:ubuntu
@@ -53,7 +62,9 @@ services:
   #   volumes:
   #     - ./homebridge/volumes/homebridge:/homebridge
 
-
+  # ---------------------------------------------------------------------------- #
+  #                                    Pi-Hole                                   #
+  # ---------------------------------------------------------------------------- #
   pihole:
     container_name: pihole
     image: pihole/pihole:latest
@@ -79,6 +90,9 @@ services:
       - "traefik.http.routers.hello.rule=Path(`/`)"
       - "traefik.http.routers.hello.entrypoints=web"
 
+  # ---------------------------------------------------------------------------- #
+  #                                     Plex                                     #
+  # ---------------------------------------------------------------------------- #
   plex:
     image: lscr.io/linuxserver/plex
     container_name: plex
@@ -99,16 +113,23 @@ services:
 
     restart: unless-stopped
 
-
+  # ---------------------------------------------------------------------------- #
+  #                               Hello (http test)                              #
+  # ---------------------------------------------------------------------------- #
   hello:
     image: nginxdemos/hello
     container_name: hello
+    ports:
+      - "80:80"
     labels:
     - "traefik.enable=true"
     - "traefik.http.routers.hello.rule=Path(`/hello`)"
     - "traefik.http.routers.hello.entrypoints=web"
     - "traefik.http.routers.hello.rule=Host(hello.traefik.local)"
 
+  # ---------------------------------------------------------------------------- #
+  #                                    Traefik                                   #
+  # ---------------------------------------------------------------------------- #
   # traefik:
   #   image: "traefik:v2.6"
   #   container_name: "traefik"
@@ -129,6 +150,9 @@ services:
   #     - "traefik.http.routers.api.service=api@internal"
   #     - "traefik.http.routers.api.entrypoints=web"
 
+  # ---------------------------------------------------------------------------- #
+  #                                     Nginx                                    #
+  # ---------------------------------------------------------------------------- #
   # nginx:
   #   image: nginx
   #   volumes:
@@ -143,9 +167,12 @@ services:
 
   # wireguard
 
+
+# ---------------------------------- Volumes --------------------------------- #
 volumes:
   node-red-data:
 
+# --------------------------------- Networks --------------------------------- #
 networks:
   node-red-net:
   # lan:
