@@ -1,0 +1,10 @@
+services:
+  nginx:
+    image: nginx
+    volumes:
+    - ./templates:/etc/nginx/templates
+    ports:
+    - "8081:80"
+    environment:
+    - NGINX_HOST=pi
+    - NGINX_PORT=80

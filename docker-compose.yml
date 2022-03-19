@@ -1,31 +1,75 @@
 services:
   node-red:
-   extends:
-     file: node-red/node-red.yml
-     service: node-red
+    extends:
+      file: node-red/node-red.yml
+      service: node-red
+    ports:
+      - "1880:1880"
 
   transmission:
     extends:
       file: transmission/transmission.yml
       service: transmission
+    ports:
+      - 9091:9091
+      - 51413:51413
+      - 51413:51413/udp
 
   homebridge:
     extends:
       file: homebridge/homebridge.yml
       service: homebridge
+    # Port: 8581
+
 
   pi-hole:
     extends:
       file: pi-hole/pi-hole.yml
       service: pihole
+    # depends_on:
+    #   - dhcphelper
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp"
+      - "81:80/tcp"
+
+  # dhcphelper:
+  #   extends:
+  #     file: pi-hole/pi-hole.yml
+  #     service: dhcphelper
 
   plex:
     extends:
       file: plex/plex.yml
       service: plex
+    # Port: 32400
+
+  hello:
+    extends:
+      file: hello/hello.yml
+      service: hello
+    ports:
+      - 8082:80
+
+  # traefik:
+  #   extends:
+  #     file: traefik/traefik.yml
+  #     service: traefik
+  #   ports:
+  #     - "80:80"
+  #     - "8080:8080"
+
 
 volumes:
   node-red-data:
 
 networks:
   node-red-net:
+  lan:
+    external: true
+  backend:
+    ipam:
+      config:
+        - subnet: 172.31.0.0/16
+

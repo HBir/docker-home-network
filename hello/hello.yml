@@ -1,0 +1,10 @@
+version: '2'
+services:
+    hello:
+      image: nginxdemos/hello
+      container_name: hello
+      labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hello.rule=Path(`/hello`)"
+      - "traefik.http.routers.hello.entrypoints=web"
+      - "traefik.http.routers.hello.rule=Host(hello.traefik.local)"
