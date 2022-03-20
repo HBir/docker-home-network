@@ -10,14 +10,14 @@ services:
       - TZ=Europe/Stockholm
     ports:
       - "1880:1880"
-    # networks:
-    #   - node-red-net
     volumes:
       - ./node-red/data:/data
       - ./node-red/.ssh:/usr/src/node-red/.ssh # Need ssh keys here
     extra_hosts:
       host.docker.internal: host-gateway
     restart: unless-stopped
+    labels:
+    - "traefik.enable=true"
 
   # ---------------------------------------------------------------------------- #
   #                                 Transmission                                 #
@@ -44,6 +44,8 @@ services:
       - 51413:51413
       - 51413:51413/udp
     restart: unless-stopped
+    labels:
+    - "traefik.enable=true"
 
   # ---------------------------------------------------------------------------- #
   #                                  Homebridge                                  #
@@ -87,8 +89,6 @@ services:
     restart: unless-stopped # Recommended but not required (DHCP needs NET_ADMIN)
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.hello.rule=Path(`/`)"
-      - "traefik.http.routers.hello.entrypoints=web"
 
   # ---------------------------------------------------------------------------- #
   #                                     Plex                                     #
@@ -112,6 +112,9 @@ services:
       - /mnt/usb/Torrents/complete:/new_dl
 
     restart: unless-stopped
+    labels:
+    - "traefik.enable=true"
+
 
   # ---------------------------------------------------------------------------- #
   #                               Hello (http test)                              #
@@ -119,12 +122,12 @@ services:
   hello:
     image: nginxdemos/hello
     container_name: hello
-    ports:
-      - "8081:80"
+    # ports:
+    #   - "8081:80"
     labels:
     - "traefik.enable=true"
     # - "traefik.http.routers.hello.entrypoints=web"
-    - "traefik.http.routers.hello.rule=Host(`hello.$DOMAINNAME`)"
+    # - "traefik.http.routers.hello.rule=Host(`hello.$DOMAINNAME`)"
 
 
 
@@ -145,26 +148,27 @@ services:
     image: "traefik:v2.6"
     container_name: "traefik"
     command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      # - "--entrypoints.websecure.address=:443"
-      # - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      # - --entrypoints.websecure.http.tls.certresolver=cloudflare
-      # - --certificatesresolvers.cloudflare.acme.dnschallenge=true
-      # - --certificatesresolvers.cloudflare.acme.email=${CF_API_EMAIL}
-      # - --certificatesresolvers.cloudflare.acme.storage=acme.json
-      # - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
+    # - "--api.dashboard=true"
+    - "--api.insecure=true"
+    - "--providers.docker=true"
+    - "--entrypoints.web.address=:80"
+    - "--providers.docker.exposedbydefault=true"
+    - --providers.docker.defaultrule=HostHeader(`{{ index .Labels "com.docker.compose.service" }}.$DOMAINNAME`)
+    # - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+    # - --entrypoints.websecure.http.tls.certresolver=cloudflare
+    # - --certificatesresolvers.cloudflare.acme.dnschallenge=true
+    # - --certificatesresolvers.cloudflare.acme.email=${CF_API_EMAIL}
+    # - --certificatesresolvers.cloudflare.acme.storage=acme.json
+    # - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
 
 
 
-      # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
-      # - "--certificatesresolvers.myresolver.acme.email=hannes@birgersson.dev"
-      # - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-      - "--pilot.token=$PILOT_TOKEN"
+    # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+    # - "--certificatesresolvers.myresolver.acme.email=hannes@birgersson.dev"
+    # - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    - "--pilot.token=$PILOT_TOKEN"
 
-      # - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
+    # - "--providers.docker.exposedbydefault=false"
     environment:
       - CF_API_EMAIL=$CF_API_EMAIL
       - CF_API_KEY=$CF_DNS_API_TOKEN
@@ -204,16 +208,12 @@ services:
   # wireguard
 
 
-# ---------------------------------- Volumes --------------------------------- #
-# volumes:
-#   node-red-data:
-
 # # --------------------------------- Networks --------------------------------- #
 # networks:
-#   node-red-net:
-  # proxy:
-  #   external:
-  #     name: proxy
+# #   node-red-net:
+#   proxy:
+#     external:
+#       name: proxy
   # socket_proxy:
   #   external:
   #     name: socket_proxy
