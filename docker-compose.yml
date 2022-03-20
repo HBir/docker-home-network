@@ -17,7 +17,9 @@ services:
       host.docker.internal: host-gateway
     restart: unless-stopped
     labels:
-    - "traefik.enable=true"
+      traefik.enable: "true"
+      traefik.http.routers.nodered.rule: "Host(`nodered.${DOMAINNAME}`)"
+      traefik.http.routers.nodered.entrypoints: "web"
 
   # ---------------------------------------------------------------------------- #
   #                                 Transmission                                 #
@@ -45,7 +47,9 @@ services:
       - 51413:51413/udp
     restart: unless-stopped
     labels:
-    - "traefik.enable=true"
+      traefik.enable: "true"
+      traefik.http.routers.transmission.rule: "Host(`transmission.${DOMAINNAME}`)"
+      traefik.http.routers.transmission.entrypoints: "web"
 
   # ---------------------------------------------------------------------------- #
   #                                  Homebridge                                  #
@@ -88,14 +92,14 @@ services:
       - NET_ADMIN
     restart: unless-stopped # Recommended but not required (DHCP needs NET_ADMIN)
     labels:
-    - 'traefik.enable=true'
-    - 'traefik.http.routers.pihole.rule=Host(`pihole.${DOMAINNAME}`)'
-    - 'traefik.http.routers.pihole.entrypoints=web-secure'
-    - 'traefik.http.routers.pihole.tls=true'
-    - "traefik.http.routers.pihole.tls.certresolver=certificato"
-    - "traefik.http.routers.pihole.tls.domains[0].main=*.${DOMAINNAME}"
-    - "traefik.http.routers.pihole.service=pihole"
-    - "traefik.http.services.piholeService.loadBalancer.server.port=80"
+      traefik.enable: "true"
+      traefik.http.routers.pihole.rule: "Host(`pihole.${DOMAINNAME}`)"
+      traefik.http.routers.pihole.entrypoints: "web"
+      # traefik.http.routers.pihole.tls: "true"
+      # traefik.http.routers.pihole.tls.certresolver: "certificato"
+      # traefik.http.routers.pihole.tls.domains[0].main: "pihole.${DOMAINNAME}"
+      # traefik.http.routers.pihole.service: "pihole"
+      # traefik.http.services.pihole.loadBalancer.server.port: "81"
 
   # ---------------------------------------------------------------------------- #
   #                                     Plex                                     #
@@ -103,12 +107,14 @@ services:
   plex:
     image: lscr.io/linuxserver/plex
     container_name: plex
-    network_mode: host # Port: 32400
+    # network_mode: host # Port: 32400
     environment:
       - PUID=1000
       - PGID=1000
       - VERSION=docker
-      - PLEX_CLAIM=claim-Lwd_4B5E2yBV2hc-Gvxc #optional
+      - PLEX_CLAIM=claim-FqELS3T4w6ay8BBsMR8H #optional
+      - ADVERTISE_IP="http://${SERVER_IP}:32400"
+      - HOSTNAME=PlexServer
     volumes:
       - ./plex/config:/config
       - /mnt/usb/Server/Music:/music
@@ -117,8 +123,23 @@ services:
       - /mnt/usb/Server/Audiobooks:/audiobooks
       - /mnt/usb/Server/Other:/other
       - /mnt/usb/Torrents/complete:/new_dl
-
+    ports:
+      - 32400:32400
+      - 1900:1900/udp
+      - 3005:3005
+      - 5353/udp
+      - 8324:8324
+      - 32410:32410/udp
+      - 32412:32412/udp
+      - 32413:32413/udp
+      - 32414:32414/udp
+      - 32469:32469
     restart: unless-stopped
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.plex.rule: "Host(`plex.${DOMAINNAME}`)"
+      traefik.http.routers.plex.entrypoints: "web"
+      traefik.http.services.plex.loadbalancer.server.port: 32400
 
 
 
@@ -131,7 +152,9 @@ services:
     # ports:
     #   - "8081:80"
     labels:
-    - "traefik.enable=true"
+      traefik.enable: "true"
+      traefik.http.routers.hello.rule: "Host(`hello.${DOMAINNAME}`)"
+      traefik.http.routers.hello.entrypoints: "web"
     # - "traefik.http.routers.hello.entrypoints=web"
     # - "traefik.http.routers.hello.rule=Host(`hello.$DOMAINNAME`)"
 
@@ -140,14 +163,23 @@ services:
   whoami:
     # A container that exposes an API to show its IP address
     image: traefik/whoami
+    container_name: "whoami"
     labels:
-    - 'traefik.enable=true'
-    - 'traefik.http.routers.whoami.rule=Host(`whoami.${DOMAINNAME}`)'
-    - 'traefik.http.routers.whoami.entrypoints=web-secure'
-    - 'traefik.http.routers.whoami.tls=true'
-    - "traefik.http.routers.whoami.tls.certresolver=certificato"
-    - "traefik.http.routers.whoami.tls.domains[0].main=*.${DOMAINNAME}"
-    - "traefik.http.services.whoami.loadBalancer.server.port=80"
+      traefik.enable: "true"
+      traefik.http.routers.whoami.rule: "Host(`whoami.${DOMAINNAME}`)"
+      traefik.http.routers.whoami.entrypoints: "web"
+    # - 'traefik.enable=true'
+    # - 'traefik.http.routers.whoami.rule=Host(`whoami.${DOMAINNAME}`)'
+    # - 'traefik.http.routers.whoami.entrypoints=web-secure'
+    # - 'traefik.http.routers.whoami.tls=true'
+    # - "traefik.http.routers.whoami.tls.certresolver=certificato"
+    # - "traefik.http.routers.whoami.tls.domains[0].main=*.${DOMAINNAME}"
+    # - "traefik.http.services.whoami.loadBalancer.server.port=80"
+
+      # traefik.http.routers.whoami.tls.certresolver: "certificato"
+      # traefik.http.routers.whoami.tls.domains[0].main: "whoami.${DOMAINNAME}"
+      # traefik.http.routers.whoami.tls: "true"
+
 
   # ---------------------------------------------------------------------------- #
   #                                    Traefik                                   #
@@ -159,62 +191,70 @@ services:
     - "--api.dashboard=true"
     - "--api.insecure=true"
     - "--providers.docker=true"
+
     - "--entrypoints.web.address=:80"
-    - "--providers.docker.exposedbydefault=true"
-    - --providers.docker.defaultrule=HostHeader(`{{ index .Labels "com.docker.compose.service" }}.$DOMAINNAME`)
-    # - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-    # - --entrypoints.websecure.http.tls.certresolver=cloudflare
-    # - --certificatesresolvers.cloudflare.acme.dnschallenge=true
-    # - --certificatesresolvers.cloudflare.acme.email=${CF_API_EMAIL}
-    # - --certificatesresolvers.cloudflare.acme.storage=acme.json
-    # - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
-
-    - "--providers.file.directory=/FileProvider/"
-    - "--providers.file.watch=true"
-    - "--entrypoints.web-secure.address=:443"
-    - "--serverstransport.insecureskipverify=true"
-    - "--certificatesresolvers.certificato.acme.dnschallenge.provider=cloudflare"
-    - "--certificatesresolvers.certificato.acme.dnschallenge.delaybeforecheck=10"
-    - "--certificatesresolvers.certificato.acme.dnschallenge.resolvers=1.1.1.1:53"
-    # - "--certificatesresolvers.certificato.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
-    - "--certificatesresolvers.certificato.acme.email=${CF_API_EMAIL}"
-    - "--certificatesresolvers.certificato.acme.storage=acme.json"
+    - "--providers.docker.exposedbydefault=false"
+    # - --providers.docker.defaultrule=HostHeader(`{{ index .Labels "com.docker.compose.service" }}.$DOMAINNAME`)
 
 
+    # - "--providers.file.directory=/FileProvider/"
+    # - "--providers.file.watch=true"
+    # - "--entrypoints.web-secure.address=:443"
+    # - "--serverstransport.insecureskipverify=true"
 
-    # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
-    # - "--certificatesresolvers.myresolver.acme.email=hannes@birgersson.dev"
-    # - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-    - "--pilot.token=$PILOT_TOKEN"
+    # -------------------------------- Cloudflare -------------------------------- #
+    # - "--certificatesresolvers.certificato.acme.dnschallenge.provider=cloudflare"
+    # - "--certificatesresolvers.certificato.acme.dnschallenge.delaybeforecheck=10"
+    # - "--certificatesresolvers.certificato.acme.dnschallenge.resolvers=1.1.1.1:53"
+    # # - "--certificatesresolvers.certificato.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+    # - "--certificatesresolvers.certificato.acme.email=${CF_API_EMAIL}"
+    # # - "--certificatesresolvers.certificato.acme.storage=acme.json"
+    # - "--certificatesresolvers.certificato.acme.storage=/letsencrypt/acme.json"
 
-    # - "--providers.docker.exposedbydefault=false"
-    environment:
-      CF_API_EMAIL: ${CF_API_EMAIL}
-      CF_API_KEY: ${CF_API_KEY}
-      CLOUDFLARE_EMAIL: ${CF_API_EMAIL}
-      CLOUDFLARE_API_KEY: ${CF_API_KEY}
+
+    # ------------------------------------ TLS ----------------------------------- #
+    # - "--certificatesresolvers.certificato.acme.tlschallenge=true"
+    # # - "--certificatesresolvers.certificato.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+    # - "--certificatesresolvers.certificato.acme.email=${CF_API_EMAIL}"
+    # # - "--certificatesresolvers.certificato.acme.storage=acme.json"
+    # - "--certificatesresolvers.certificato.acme.storage=/letsencrypt/acme.json"
+
+    # ---------------------------------------------------------------------------- #
+
+    # - "--entrypoints.dnsovertls.address=:853"
+    # - "--entrypoints.dns.address=:53"
+
+
+    # - "--pilot.token=$PILOT_TOKEN"
+
+    # environment:
+      # CF_API_EMAIL: ${CF_API_EMAIL}
+      # CF_API_KEY: ${CF_API_KEY}
+      # CLOUDFLARE_EMAIL: ${CF_API_EMAIL}
+      # CLOUDFLARE_API_KEY: ${CF_API_KEY}
     ports:
       - "80:80"
-      - "443:443"
-      - "8080:8080"
+      # - "443:443"
+      # - "8080:8080"
     volumes:
-      - "./traefik/acme.json:/acme.json"
+      # - "./traefik/acme.json:/acme.json"
+      # - "./letsencrypt:/letsencrypt"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - /volume1/docker/traefik/FileProvider/:/FileProvider/
+      # - /volume1/docker/traefik/FileProvider/:/FileProvider/
     # networks:
     #   - socket_proxy
     #   - proxy
     #   - apps
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`traefik.${DOMAINNAME}`)"
-      - "traefik.http.routers.api.entrypoints=web-secure"
-      - "traefik.http.routers.api.tls.certresolver=certificato"
-      - "traefik.http.routers.api.tls.domains[0].main=*.${DOMAINNAME}"
-      - "traefik.http.routers.api.service=api@internal"
-    #   # - "traefik.http.routers.traefik-rtr.rule=HostHeader(`traefik.$DOMAINNAME`)"
-    #   - "traefik.http.routers.traefik.service=api@internal"
-    #   - "traefik.http.routers.traefik.entrypoints=web"
+      traefik.enable: "true"
+      traefik.http.routers.traefik.rule: "Host(`traefik.${DOMAINNAME}`)"
+      traefik.http.routers.traefik.service: "api@internal"
+      # - "traefik.http.routers.api.entrypoints=web-secure"
+      # - "traefik.http.routers.api.tls.certresolver=certificato"
+      # - "traefik.http.routers.api.tls.domains[0].main=*.${DOMAINNAME}"
+      # - "traefik.http.routers.traefik-rtr.rule=HostHeader(`traefik.$DOMAINNAME`)"
+      # - "traefik.http.routers.traefik.service=api@internal"
+      # - "traefik.http.routers.traefik.entrypoints=web"
 
   # ---------------------------------------------------------------------------- #
   #                                     Nginx                                    #
