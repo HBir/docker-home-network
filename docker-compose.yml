@@ -50,13 +50,13 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     labels:
       traefik.enable: "true"
-      traefik.http.routers.traefik-secure.service: "api@internal"
-      traefik.http.routers.traefik-secure.entrypoints: "websecure"
-      traefik.http.routers.traefik-secure.rule: "Host(`traefik.${DOMAINNAME}`)"
-      traefik.http.routers.traefik-secure.tls: "true"
-      traefik.http.routers.traefik-secure.tls.certresolver: "wildcard-cloudflare"
-      traefik.http.routers.traefik-secure.tls.domains[0].main: "${DOMAINNAME}"
-      traefik.http.routers.traefik-secure.tls.domains[0].sans: "*.${DOMAINNAME}"
+      traefik.http.routers.traefik.service: "api@internal"
+      traefik.http.routers.traefik.entrypoints: "websecure"
+      traefik.http.routers.traefik.rule: "Host(`traefik.${DOMAINNAME}`)"
+      traefik.http.routers.traefik.tls: "true"
+      traefik.http.routers.traefik.tls.certresolver: "wildcard-cloudflare"
+      traefik.http.routers.traefik.tls.domains[0].main: "${DOMAINNAME}"
+      traefik.http.routers.traefik.tls.domains[0].sans: "*.${DOMAINNAME}"
 
   # ---------------------------------------------------------------------------- #
   #                                   Node-Red                                   #
@@ -65,7 +65,7 @@ services:
     container_name: nodered
     image: nodered/node-red:latest
     environment:
-      - TZ=Europe/Stockholm
+      - TZ=${TZ}
     ports:
       - "1880:1880"
     networks:
@@ -93,7 +93,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/Stockholm
+      - TZ=${TZ}
       - TRANSMISSION_WEB_HOME=/combustion-release/ #optional
       - VIRTUAL_HOST=transmission.local
       - VIRTUAL_PORT=9091
@@ -132,7 +132,7 @@ services:
   #     - PUID=1000
   #     - HOMEBRIDGE_CONFIG_UI=1
   #     - HOMEBRIDGE_CONFIG_UI_PORT=8581
-  #     - TZ=Europe/Stockholm
+  #     - TZ=${TZ}
   #   volumes:
   #     - ./homebridge/volumes/homebridge:/homebridge
 
@@ -173,7 +173,7 @@ services:
       - "67:67/udp"
       - "81:80/tcp"
     environment:
-      TZ: 'Europe/Stockholm'
+      TZ: '${TZ}'
       # Unbound IP
       DNS1: 10.0.92.22#53
       DNS2: 10.0.92.22#53
@@ -289,7 +289,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/Stockholm
+      - TZ=${TZ}
       # - SERVERURL=wireguard.domain.com #optional
       - SERVERPORT=51820 #optional
       - PEERS=1 #optional
@@ -305,6 +305,36 @@ services:
     restart: unless-stopped
 
   # openvpn-client
+
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    restart: unless-stopped
+    networks:
+      - proxy
+      - socket_proxy
+      - apps
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./portainer/data:/data # Change to local directory if you want to save/transfer config locally
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/host
+
+    environment:
+      - TZ=$TZ
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "proxy"
+      ## HTTP Routers
+      traefik.http.routers.portainer.entrypoints: "websecure"
+      traefik.http.routers.portainer.tls: "true"
+
+      traefik.http.routers.portainer.rule: "Host(`portainer.$DOMAINNAME`)"
+      ## HTTP Services
+      traefik.http.routers.portainer.service: "portainer-svc"
+      traefik.http.services.portainer-svc.loadbalancer.server.port: "9000"
+
 
 # # --------------------------------- Networks --------------------------------- #
 networks:
