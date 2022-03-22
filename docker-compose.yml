@@ -12,11 +12,18 @@ services:
     - "--api.dashboard=true"
     - "--api.insecure=true"
     - "--providers.docker=true"
-
     - "--entrypoints.web.address=:80"
     - "--entrypoints.websecure.address=:443"
     - "--providers.docker.exposedbydefault=false"
     # - --providers.docker.defaultrule=HostHeader(`{{ index .Labels "com.docker.compose.service" }}.$DOMAINNAME`)
+    - "--pilot.token=$PILOT_TOKEN"
+
+    - --providers.docker.network=proxy
+    - --accessLog=true
+    - --accessLog.filePath=/traefik.log
+    - --accessLog.bufferingSize=100 # Configuring a buffer of 100 lines
+    - --accessLog.filters.statusCodes=400-599
+
 
     - --certificatesresolvers.wildcard-cloudflare.acme.dnschallenge=true
     - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.provider=cloudflare
@@ -24,12 +31,8 @@ services:
     - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.disablepropagationcheck=true
     - --certificatesresolvers.wildcard-cloudflare.acme.caserver=https://acme-v02.api.letsencrypt.org/directory
     - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.delayBeforeCheck=10
-
     - --certificatesresolvers.wildcard-cloudflare.acme.email=${CF_API_EMAIL}
     - --certificatesresolvers.wildcard-cloudflare.acme.storage=/tls-certificates/acme.json
-
-    - "--pilot.token=$PILOT_TOKEN"
-
     environment:
       CF_API_EMAIL: ${CF_API_EMAIL}
       CF_API_KEY: ${CF_API_KEY}
@@ -37,22 +40,24 @@ services:
       - "80:80"
       - "443:443"
       - "8080:8080"
+    networks:
+      - socket_proxy
+      - proxy
+      - apps
     volumes:
+      - ./traefik/traefik.log:/traefik.log
       - ./traefik/tls-certificates:/tls-certificates
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     labels:
       traefik.enable: "true"
-      # traefik.http.routers.traefik.entrypoints: "web"
-      # traefik.http.routers.traefik.rule: "Host(`traefik.${DOMAINNAME}`)"
       traefik.http.routers.traefik-secure.service: "api@internal"
-
       traefik.http.routers.traefik-secure.entrypoints: "websecure"
       traefik.http.routers.traefik-secure.rule: "Host(`traefik.${DOMAINNAME}`)"
       traefik.http.routers.traefik-secure.tls: "true"
       traefik.http.routers.traefik-secure.tls.certresolver: "wildcard-cloudflare"
       traefik.http.routers.traefik-secure.tls.domains[0].main: "${DOMAINNAME}"
       traefik.http.routers.traefik-secure.tls.domains[0].sans: "*.${DOMAINNAME}"
-      # - "traefik.http.routers.traefik-rtr.rule=HostHeader(`traefik.$DOMAINNAME`)"
+
   # ---------------------------------------------------------------------------- #
   #                                   Node-Red                                   #
   # ---------------------------------------------------------------------------- #
@@ -63,6 +68,9 @@ services:
       - TZ=Europe/Stockholm
     ports:
       - "1880:1880"
+    networks:
+      - proxy
+      - apps
     volumes:
       - ./node-red/data:/data
       - ./node-red/.ssh:/usr/src/node-red/.ssh # Need ssh keys here
@@ -92,6 +100,9 @@ services:
       # - WHITELIST=iplist #optional
       # - PEERPORT=peerport #optional
       # - HOST_WHITELIST=dnsnane list #optional
+    networks:
+      - proxy
+      - apps
     volumes:
       - ./transmission/config:/config
       - ${EXT_MOUNT_POINT}/Torrents:/downloads
@@ -131,6 +142,8 @@ services:
   unbound:
     container_name: unbound
     image: klutchell/unbound
+    # dns:
+    #   - 1.1.1.1
     # command:
     #   - --health-cmd "dig sigok.verteiltesysteme.net @127.0.0.1"
     # healthcheck:
@@ -140,16 +153,19 @@ services:
       - ./unbound/unbound.conf:/etc/unbound/unbound.conf
       - ./unbound/a-records.conf:/etc/unbound/a-records.conf
     networks:
-      pihole_net:
-        ipv4_address: 10.0.0.2
+      apps:
+        ipv4_address: 10.0.92.22
+
+      # pihole_net:
+      #   ipv4_address: 10.0.0.2
 
   pihole:
     container_name: pihole
-    # depends_on: [unbound]
+    depends_on: [unbound]
     image: pihole/pihole:latest
     # links:
     # - unbound
-    dns: 127.0.0.1:5053
+    # dns: 127.0.0.1:5053
     # For DHCP it is recommended to remove these ports and instead add: network_mode: "host"
     ports:
       - "53:53/tcp"
@@ -159,16 +175,16 @@ services:
     environment:
       TZ: 'Europe/Stockholm'
       # Unbound IP
-      DNS1: 10.0.0.2#53
-      # If we don't specify two, it will auto pick google.
-      DNS2: 10.0.0.2#53
+      DNS1: 10.0.92.22#53
+      DNS2: 10.0.92.22#53
       IPv6: "no"
       PROXY_LOCATION: pihole
+      VIRTUAL_HOST: pihole.${DOMAINNAME}
     #   DNSMASQ_LISTENING: all
-    #   # WEBPASSWORD: 'set a secure password here or it will be random'
-    # dns:
-    # - 127.0.0.1
-    # - 10.0.2.10:54 # Points to unbound
+      WEBPASSWORD: ${PIHOLE_PW}
+    dns:
+    - 127.0.0.1
+    - 10.0.92.22:53 # Points to unbound
     volumes:
       - './pi-hole/etc-pihole:/etc/pihole'
       - './pi-hole/etc-dnsmasq.d:/etc/dnsmasq.d'
@@ -177,20 +193,20 @@ services:
       - NET_ADMIN
     restart: unless-stopped # Recommended but not required (DHCP needs NET_ADMIN)
     networks:
-      pihole_net:
-        ipv4_address: 10.0.0.3
+      proxy:
+      apps:
+        # ipv4_address: 10.0.92.3
+      # pihole_net:
+      #   ipv4_address: 10.0.0.3
     labels:
       traefik.enable: "true"
       traefik.http.routers.pihole.rule: "Host(`pihole.${DOMAINNAME}`)"
       traefik.http.routers.pihole.entrypoints: "websecure"
       traefik.http.routers.pihole.tls: "true"
       traefik.http.routers.pihole.tls.certresolver: "wildcard-cloudflare"
+      traefik.http.services.pihole.loadBalancer.server.port: "80"
 
-      # traefik.http.routers.pihole.tls: "true"
-      # traefik.http.routers.pihole.tls.certresolver: "certificato"
-      # traefik.http.routers.pihole.tls.domains[0].main: "pihole.${DOMAINNAME}"
       # traefik.http.routers.pihole.service: "pihole"
-      # traefik.http.services.pihole.loadBalancer.server.port: "81"
 
   # ---------------------------------------------------------------------------- #
   #                                     Plex                                     #
@@ -208,6 +224,9 @@ services:
       - PLEX_CLAIM=${PLEX_CLAIM} # Expires
       - ADVERTISE_IP="http://${SERVER_IP}:32400"
       - HOSTNAME=PiPlex
+    networks:
+      - apps
+      - proxy
     volumes:
       - ./plex/config:/config
       - ${EXT_MOUNT_POINT}/Server/Music:/music
@@ -248,6 +267,9 @@ services:
   whoami:
     image: traefik/whoami
     container_name: "whoami"
+    networks:
+      - apps
+      - proxy
     labels:
       traefik.enable: "true"
       traefik.http.routers.whoami.rule: "Host(`whoami.${DOMAINNAME}`)"
@@ -286,9 +308,15 @@ services:
 
 # # --------------------------------- Networks --------------------------------- #
 networks:
-  pihole_net:
+  proxy:
+    external:
+      name: proxy
+  socket_proxy:
+    external:
+      name: socket_proxy
+  apps:
+    external:
+      name: apps
+  default:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 10.0.0.0/29
 
