@@ -94,8 +94,8 @@ services:
       # - HOST_WHITELIST=dnsnane list #optional
     volumes:
       - ./transmission/config:/config
-      - /mnt/usb/Torrents:/downloads
-      - /mnt/usb/Server/Watch:/watch
+      - ${EXT_MOUNT_POINT}/Torrents:/downloads
+      - ${EXT_MOUNT_POINT}/Server/Watch:/watch
     ports:
       - 9091:9091
       - 51413:51413
@@ -210,12 +210,12 @@ services:
       - HOSTNAME=PiPlex
     volumes:
       - ./plex/config:/config
-      - /mnt/usb/Server/Music:/music
-      - /mnt/usb/Server/TV series:/tv
-      - /mnt/usb/Server/Movies:/movies
-      - /mnt/usb/Server/Audiobooks:/audiobooks
-      - /mnt/usb/Server/Other:/other
-      - /mnt/usb/Torrents/complete:/new_dl
+      - ${EXT_MOUNT_POINT}/Server/Music:/music
+      - ${EXT_MOUNT_POINT}/Server/TV series:/tv
+      - ${EXT_MOUNT_POINT}/Server/Movies:/movies
+      - ${EXT_MOUNT_POINT}/Server/Audiobooks:/audiobooks
+      - ${EXT_MOUNT_POINT}/Server/Other:/other
+      - ${EXT_MOUNT_POINT}/Torrents/complete:/new_dl
     ports:
       - 32400:32400
       - 1900:1900/udp
