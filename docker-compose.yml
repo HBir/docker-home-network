@@ -78,12 +78,10 @@ services:
     #   - --health-cmd "dig sigok.verteiltesysteme.net @127.0.0.1"
     # healthcheck:
     #   test: dig sigok.verteiltesysteme.net @127.0.0.1 +dnssec | grep NOERROR
-    # ports:
-    # - 53/tcp
-    # - 53/udp
     restart: unless-stopped
-    # volumes:
-    #   - ./unbound/config:/etc/unbound/config
+    volumes:
+      - ./unbound/unbound.conf:/etc/unbound/unbound.conf
+      - ./unbound/a-records.conf:/etc/unbound/a-records.conf
     networks:
       pihole_net:
         ipv4_address: 10.0.0.2
@@ -220,74 +218,52 @@ services:
   traefik:
     image: "traefik:v2.6"
     container_name: "traefik"
+    dns:
+    - 8.8.8.8
     command:
     - "--api.dashboard=true"
     - "--api.insecure=true"
     - "--providers.docker=true"
 
     - "--entrypoints.web.address=:80"
+    - "--entrypoints.websecure.address=:443"
     - "--providers.docker.exposedbydefault=false"
     # - --providers.docker.defaultrule=HostHeader(`{{ index .Labels "com.docker.compose.service" }}.$DOMAINNAME`)
 
+    - --certificatesresolvers.wildcard-cloudflare.acme.dnschallenge=true
+    - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.provider=cloudflare
+    - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+    - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.disablepropagationcheck=true
+    - --certificatesresolvers.wildcard-cloudflare.acme.caserver=https://acme-v02.api.letsencrypt.org/directory
+    - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.delayBeforeCheck=0
+    - --certificatesresolvers.wildcard-cloudflare.acme.email=hannesbirgersson@gmail.com
+    - --certificatesresolvers.wildcard-cloudflare.acme.storage=/tls-certificates/acme.json
 
-    # - "--providers.file.directory=/FileProvider/"
-    # - "--providers.file.watch=true"
-    # - "--entrypoints.web-secure.address=:443"
-    # - "--serverstransport.insecureskipverify=true"
+    # - "--pilot.token=$PILOT_TOKEN"
 
-    # -------------------------------- Cloudflare -------------------------------- #
-    # - "--certificatesresolvers.certificato.acme.dnschallenge.provider=cloudflare"
-    # - "--certificatesresolvers.certificato.acme.dnschallenge.delaybeforecheck=10"
-    # - "--certificatesresolvers.certificato.acme.dnschallenge.resolvers=1.1.1.1:53"
-    # # - "--certificatesresolvers.certificato.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
-    # - "--certificatesresolvers.certificato.acme.email=${CF_API_EMAIL}"
-    # # - "--certificatesresolvers.certificato.acme.storage=acme.json"
-    # - "--certificatesresolvers.certificato.acme.storage=/letsencrypt/acme.json"
-
-
-    # ------------------------------------ TLS ----------------------------------- #
-    # - "--certificatesresolvers.certificato.acme.tlschallenge=true"
-    # # - "--certificatesresolvers.certificato.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
-    # - "--certificatesresolvers.certificato.acme.email=${CF_API_EMAIL}"
-    # # - "--certificatesresolvers.certificato.acme.storage=acme.json"
-    # - "--certificatesresolvers.certificato.acme.storage=/letsencrypt/acme.json"
-
-    # ---------------------------------------------------------------------------- #
-
-    # - "--entrypoints.dnsovertls.address=:853"
-    # - "--entrypoints.dns.address=:53"
-
-
-    - "--pilot.token=$PILOT_TOKEN"
-
-    # environment:
-      # CF_API_EMAIL: ${CF_API_EMAIL}
-      # CF_API_KEY: ${CF_API_KEY}
-      # CLOUDFLARE_EMAIL: ${CF_API_EMAIL}
-      # CLOUDFLARE_API_KEY: ${CF_API_KEY}
+    environment:
+      CF_API_EMAIL: ${CF_API_EMAIL}
+      CF_API_KEY: ${CF_API_KEY}
     ports:
       - "80:80"
-      # - "443:443"
+      - "443:443"
       - "8080:8080"
     volumes:
-      # - "./traefik/acme.json:/acme.json"
-      # - "./letsencrypt:/letsencrypt"
+      - ./traefik/tls-certificates:/tls-certificates
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      # - /volume1/docker/traefik/FileProvider/:/FileProvider/
-    # networks:
-    #   - socket_proxy
-    #   - proxy
-    #   - apps
     labels:
       traefik.enable: "true"
+      traefik.http.routers.traefik.entrypoints: "web"
       traefik.http.routers.traefik.rule: "Host(`traefik.${DOMAINNAME}`)"
       traefik.http.routers.traefik.service: "api@internal"
-      # - "traefik.http.routers.api.entrypoints=web-secure"
-      # - "traefik.http.routers.api.tls.certresolver=certificato"
-      # - "traefik.http.routers.api.tls.domains[0].main=*.${DOMAINNAME}"
+
+      traefik.http.routers.traefik-secure.entrypoints: "websecure"
+      traefik.http.routers.traefik-secure.rule: "Host(`traefik.${DOMAINNAME}`)"
+      traefik.http.routers.traefik-secure.tls: "true"
+      traefik.http.routers.traefik-secure.tls.certresolver: "wildcard-cloudflare"
+      # traefik.http.routers.traefik-secure.tls.domains[0].main: "${DOMAINNAME}"
+      traefik.http.routers.traefik-secure.tls.domains[0].sans: "*.${DOMAINNAME}"
       # - "traefik.http.routers.traefik-rtr.rule=HostHeader(`traefik.$DOMAINNAME`)"
-      # - "traefik.http.routers.traefik.service=api@internal"
-      # - "traefik.http.routers.traefik.entrypoints=web"
 
   # ---------------------------------------------------------------------------- #
   #                                   Wireguard                                  #
@@ -319,6 +295,7 @@ services:
   # openvpn-client
 
   # wireguard
+
 
 # # --------------------------------- Networks --------------------------------- #
 networks:
