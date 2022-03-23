@@ -3,3 +3,4 @@
 .backup
 .env
 !dockerfile
+!docker-compose.yml

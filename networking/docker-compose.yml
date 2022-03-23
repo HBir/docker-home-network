@@ -1,0 +1,336 @@
+version: '3.7'
+
+# --------------------------------- Networks --------------------------------- #
+networks:
+  proxy:
+    external:
+      name: proxy
+  socket_proxy:
+    external:
+      name: socket_proxy
+  apps:
+    external:
+      name: apps
+  default:
+    driver: bridge
+
+services:
+  # ---------------------------------------------------------------------------- #
+  #                                    Traefik                                   #
+  # ---------------------------------------------------------------------------- #
+  traefik:
+    image: "traefik:v2.6"
+    container_name: "traefik"
+    dns:
+    - 8.8.8.8
+    command:
+    - "--api.dashboard=true"
+    - "--api.insecure=true"
+    - "--providers.docker=true"
+    - "--entrypoints.web.address=:80"
+    - "--entrypoints.websecure.address=:443"
+    - "--providers.docker.exposedbydefault=false"
+    # - --providers.docker.defaultrule=Host(`{{ index .Labels "com.docker.compose.service" }}.$DOMAINNAME`)
+    - "--pilot.token=$PILOT_TOKEN"
+
+    - --providers.docker.network=proxy
+    - --accessLog=true
+    - --accessLog.filePath=/traefik.log
+    - --accessLog.bufferingSize=100 # Configuring a buffer of 100 lines
+    - --accessLog.filters.statusCodes=400-599
+
+
+    - --certificatesresolvers.wildcard-cloudflare.acme.dnschallenge=true
+    - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.provider=cloudflare
+    # - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+    - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.disablepropagationcheck=true
+    - --certificatesresolvers.wildcard-cloudflare.acme.caserver=https://acme-v02.api.letsencrypt.org/directory
+    - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.delayBeforeCheck=10
+    - --certificatesresolvers.wildcard-cloudflare.acme.email=${CF_API_EMAIL}
+    - --certificatesresolvers.wildcard-cloudflare.acme.storage=/tls-certificates/acme.json
+    environment:
+      CF_API_EMAIL: ${CF_API_EMAIL}
+      CF_API_KEY: ${CF_API_KEY}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    networks:
+      - socket_proxy
+      - proxy
+      - apps
+    volumes:
+      - $DOCKERDIR/traefik/traefik.log:/traefik.log
+      - $DOCKERDIR/traefik/tls-certificates:/tls-certificates
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    restart: unless-stopped
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.traefik.service: "api@internal"
+      traefik.http.routers.traefik.entrypoints: "websecure"
+      traefik.http.routers.traefik.rule: "Host(`traefik.${DOMAINNAME}`)"
+      traefik.http.routers.traefik.tls: "true"
+      traefik.http.routers.traefik.tls.certresolver: "wildcard-cloudflare"
+      traefik.http.routers.traefik.tls.domains[0].main: "${DOMAINNAME}"
+      traefik.http.routers.traefik.tls.domains[0].sans: "*.${DOMAINNAME}"
+      info: (:8080)
+
+  # ---------------------------------------------------------------------------- #
+  #                               Pi-Hole & Unbound                              #
+  # ---------------------------------------------------------------------------- #
+  # unbound:
+  #   container_name: unbound
+  #   image: klutchell/unbound
+  #   # dns:
+  #   #   - 1.1.1.1
+  #   # command:
+  #     # - --health-cmd "dig sigok.verteiltesysteme.net @127.0.0.1"
+  #   # healthcheck:
+  #   #   test: dig sigok.verteiltesysteme.net @127.0.0.1 +dnssec | grep NOERROR
+  #   restart: unless-stopped
+  #   volumes:
+  #     - $DOCKERDIR/unbound/unbound.conf:/etc/unbound/unbound.conf
+  #     - $DOCKERDIR/unbound/a-records.conf:/etc/unbound/a-records.conf
+  #   networks:
+  #     apps:
+  #       ipv4_address: 10.0.92.22
+
+  pihole:
+    container_name: pihole
+    # depends_on: [unbound]
+    image: pihole/pihole:latest
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp"
+      - "81:80/tcp"
+    environment:
+      TZ: '${TZ}'
+      # Unbound IP
+      DNS1: 1.1.1.1 #10.0.92.22#53
+      DNS2: 1.0.0.1 #10.0.92.22#53
+      IPv6: "no"
+      PROXY_LOCATION: pihole
+      VIRTUAL_HOST: pihole.${DOMAINNAME}
+      DNSMASQ_LISTENING: all
+      WEBPASSWORD: ${PIHOLE_PW}
+    dns:
+    - 127.0.0.1
+    # - 10.0.92.22:53 # Points to unbound
+    volumes:
+      - '$DOCKERDIR/pi-hole/etc-pihole:/etc/pihole'
+      - '$DOCKERDIR/pi-hole/etc-dnsmasq.d:/etc/dnsmasq.d'
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    cap_add:
+      - NET_ADMIN
+    restart: unless-stopped # Recommended but not required (DHCP needs NET_ADMIN)
+    networks:
+      proxy:
+      apps:
+        ipv4_address: 10.0.92.33
+      # pihole_net:
+      #   ipv4_address: 10.0.0.3
+    labels:
+      info: "(:81)"
+      traefik.enable: "true"
+      traefik.http.routers.pihole.rule: "Host(`pihole.${DOMAINNAME}`)"
+      traefik.http.routers.pihole.entrypoints: "websecure"
+      traefik.http.routers.pihole.tls: "true"
+      traefik.http.routers.pihole.tls.certresolver: "wildcard-cloudflare"
+      traefik.http.services.pihole.loadBalancer.server.port: "80"
+
+      # traefik.http.routers.pihole.service: "pihole"
+
+  # ---------------------------------------------------------------------------- #
+  #                                   Portainer                                  #
+  # ---------------------------------------------------------------------------- #
+  portainer:
+    container_name: portainer
+    image: portainer/portainer-ce:latest
+    restart: unless-stopped
+    networks:
+      - proxy
+      - socket_proxy
+      - apps
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - $DOCKERDIR/portainer/data:/data # Change to local directory if you want to save/transfer config locally
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/host
+
+    environment:
+      - TZ=$TZ
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "proxy"
+      ## HTTP Routers
+      traefik.http.routers.portainer.entrypoints: "websecure"
+      traefik.http.routers.portainer.tls: "true"
+
+      traefik.http.routers.portainer.rule: "Host(`portainer.$DOMAINNAME`)"
+      ## HTTP Services
+      traefik.http.routers.portainer.service: "portainer-svc"
+      traefik.http.services.portainer-svc.loadbalancer.server.port: "9000"
+
+  # ---------------------------------------------------------------------------- #
+  #                         Glances - System Information                         #
+  # ---------------------------------------------------------------------------- #
+  glances:
+    image: jdreinhardt/glances:release
+    container_name: glances
+    restart: unless-stopped
+    privileged: true
+    networks:
+      - proxy
+      - socket_proxy
+      - apps
+    depends_on:
+      - socket-proxy
+    security_opt:
+      - no-new-privileges:true
+    pid: host
+    # volumes:
+    #   - $DOCKERDIR/glances/glances.conf:/glances/conf/glances.conf # Use this if you want to add a glances.conf file
+    environment:
+      # GLANCES_OPT: "-C /glances/conf/glances.conf --quiet --export influxdb"
+      GLANCES_OPT: "-w"
+      DOCKER_HOST: tcp://socket-proxy:2375
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "proxy"
+      ## HTTP Routers
+      traefik.http.routers.glances.entrypoints: "websecure"
+      traefik.http.routers.glances.tls: "true"
+      traefik.http.routers.glances.rule: "Host(`glances.$DOMAINNAME`)"
+      ## HTTP Services
+      traefik.http.routers.glances.service: "glances-svc"
+      traefik.http.services.glances-svc.loadbalancer.server.port: "61208"
+
+  # ---------------------------------------------------------------------------- #
+  #                     Dozzle - Real-time Docker Log Viewer                     #
+  # ---------------------------------------------------------------------------- #
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    restart: unless-stopped
+    networks:
+      - proxy
+      - socket_proxy
+      - apps
+    depends_on:
+      - socket-proxy
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      DOZZLE_LEVEL: info
+      DOZZLE_TAILSIZE: 300
+      DOZZLE_FILTER: "status=running"
+      DOCKER_HOST: tcp://socket-proxy:2375
+    labels:
+      traefik.enable: "true"
+      ## HTTP Routers
+      traefik.http.routers.dozzle.entrypoints: "websecure"
+      traefik.http.routers.dozzle.tls: "true"
+      traefik.http.routers.dozzle.rule: "Host(`dozzle.$DOMAINNAME`)"
+      ## HTTP Services
+      traefik.http.routers.dozzle.service: "dozzle-svc"
+      traefik.http.services.dozzle-svc.loadbalancer.server.port: "8080"
+
+
+  # ---------------------------------------------------------------------------- #
+  #       Docker Socket Proxy - Security Enchanced Proxy for Docker Socket       #
+  # ---------------------------------------------------------------------------- #
+  socket-proxy:
+    container_name: socket-proxy
+    image: tecnativa/docker-socket-proxy
+    restart: always
+    networks:
+      socket_proxy:
+        ipv4_address: 10.0.91.254
+    privileged: true
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      - LOG_LEVEL=info # debug,info,notice,warning,err,crit,alert,emerg
+      ## Variables match the URL prefix (i.e. AUTH blocks access to /auth/* parts of the API, etc.).
+      # 0 to revoke access.
+      # 1 to grant access.
+      ## Granted by Default
+      - EVENTS=1
+      - PING=1
+      - VERSION=1
+      ## Revoked by Default
+      # Security critical
+      - AUTH=0
+      - SECRETS=0
+      - POST=1 # Ouroboros
+      # Not always needed
+      - BUILD=0
+      - COMMIT=0
+      - CONFIGS=0
+      - CONTAINERS=1 # Traefik, portainer, etc.
+      - DISTRIBUTION=0
+      - EXEC=0
+      - IMAGES=1 # Portainer
+      - INFO=1 # Portainer
+      - NETWORKS=1 # Portainer
+      - NODES=0
+      - PLUGINS=0
+      - SERVICES=1 # Portainer
+      - SESSION=0
+      - SWARM=0
+      - SYSTEM=0
+      - TASKS=1 # Portaienr
+      - VOLUMES=1 # Portainer
+
+
+  # ---------------------------------------------------------------------------- #
+  #                              VPN Server & Client                             #
+  # ---------------------------------------------------------------------------- #
+  # vpn-server:
+  #   image: linuxserver/wireguard
+  #   container_name: wireguard
+  #   dns:
+  #   - 10.0.92.33 # Points to pihole
+  #   - 10.0.92.22 # Points to unbound
+  #   cap_add:
+  #     - NET_ADMIN
+  #     - SYS_MODULE
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=${TZ}
+  #     - ALLOWEDIPS=0.0.0.0/0
+  #     - SERVERURL=${VPN_URL} #optional
+  #     - SERVERPORT=51820 #optional
+  #     - PEERS=2 #optional
+  #     - PEERDNS=10.0.92.33 #${SERVER_IP} #optional
+  #     # - INTERNAL_SUBNET=10.13.13.0 #optional
+  #   networks:
+  #     proxy:
+  #     apps:
+  #   volumes:
+  #     - $DOCKERDIR/wireguard/config:/config
+  #     - /lib/modules:/lib/modules
+  #   ports:
+  #     - 51820:51820/udp
+  #   sysctls:
+  #     - net.ipv4.conf.all.src_valid_mark=1
+  #   restart: unless-stopped
+
+  # vpn-client:
+  #   image: ghcr.io/bubuntux/nordlynx
+  #   container_name: nordlynx
+  #   cap_add:
+  #     - NET_ADMIN #required
+  #   environment:
+  #     - PRIVATE_KEY=${NORD_PK} #required
+  #   networks:
+  #     apps:
+  #   restart: unless-stopped
+
+
+
+
+
