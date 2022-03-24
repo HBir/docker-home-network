@@ -16,166 +16,152 @@ services:
   #                                   Node-Red                                   #
   # ---------------------------------------------------------------------------- #
   node-red:
-    container_name: nodered
-    image: nodered/node-red:latest
-    environment:
-      - TZ=${TZ}
+    container_name: 'nodered'
+    image: 'nodered/node-red:latest'
     ports:
-      - "1880:1880"
+      - '1880:1880'
     networks:
-      - proxy
-      - apps
+      - 'proxy'
+      - 'apps'
     volumes:
-      - $DOCKERDIR/node-red/data:/data
-      - $DOCKERDIR/node-red/.ssh:/usr/src/node-red/.ssh # Need ssh keys here
+      - '$DOCKERDIR/node-red/data:/data'
+      - '$DOCKERDIR/node-red/.ssh:/usr/src/node-red/.ssh'
     extra_hosts:
-      host.docker.internal: host-gateway
-    restart: unless-stopped
+      host.docker.internal: 'host-gateway'
+    restart: 'unless-stopped'
+    environment:
+      - 'TZ=${TZ}'
     labels:
-      info: "(:1880)"
-      traefik.enable: "true"
-      traefik.http.routers.nodered.rule: "Host(`nodered.${DOMAINNAME}`)"
-      traefik.http.routers.nodered.entrypoints: "websecure"
-      traefik.http.routers.nodered.tls: "true"
-      traefik.http.routers.nodered.tls.certresolver: "wildcard-cloudflare"
+      info: '(:1880)'
+      traefik.enable: 'true'
+      traefik.http.routers.nodered.entrypoints: 'websecure'
+      traefik.http.routers.nodered.rule: 'Host(`nodered.${DOMAINNAME}`)'
+      traefik.http.routers.nodered.tls: 'true'
+      traefik.http.routers.nodered.tls.certresolver: 'wildcard-cloudflare'
 
   # ---------------------------------------------------------------------------- #
   #                                 Transmission                                 #
   # ---------------------------------------------------------------------------- #
   transmission:
-    image: lscr.io/linuxserver/transmission
-    # depends_on:
-    # - vpn
-    # network_mode: service:vpn
-    container_name: transmission
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=${TZ}
-      - TRANSMISSION_WEB_HOME=/combustion-release/ #optional
-      - VIRTUAL_HOST=transmission.local
-      - VIRTUAL_PORT=9091
-      # - WHITELIST=iplist #optional
-      # - PEERPORT=peerport #optional
-      # - HOST_WHITELIST=dnsnane list #optional
-    networks:
-      - proxy
-      - apps
-    volumes:
-      - $DOCKERDIR/transmission/config:/config
-      - ${EXT_MOUNT_POINT}/Torrents:/downloads
-      - ${EXT_MOUNT_POINT}/Server/Watch:/watch
+    container_name: 'transmission'
+    image: 'lscr.io/linuxserver/transmission'
     ports:
-      - 9091:9091
-      - 51413:51413
-      - 51413:51413/udp
-    restart: unless-stopped
+      - '9091:9091'
+      - '51413:51413'
+      - '51413:51413/udp'
+    networks:
+      - 'proxy'
+      - 'apps'
+    volumes:
+      - '$DOCKERDIR/transmission/config:/config'
+      - '${EXT_MOUNT_POINT}/Torrents:/downloads'
+      - '${EXT_MOUNT_POINT}/Server/Watch:/watch'
+    restart: 'unless-stopped'
+    environment:
+      - 'PUID=1000'
+      - 'PGID=1000'
+      - 'TZ=${TZ}'
+      - 'TRANSMISSION_WEB_HOME=/combustion-release/'
+      - 'VIRTUAL_HOST=transmission.local'
+      - 'VIRTUAL_PORT=9091'
     labels:
-      info: "(:9091)"
-      traefik.enable: "true"
-      traefik.http.routers.transmission.rule: "Host(`transmission.${DOMAINNAME}`)"
-      traefik.http.routers.transmission.entrypoints: "websecure"
-      traefik.http.routers.transmission.tls: "true"
-      traefik.http.routers.transmission.tls.certresolver: "wildcard-cloudflare"
+      info: '(:9091)'
+      traefik.enable: 'true'
+      traefik.http.routers.transmission.entrypoints: 'websecure'
+      traefik.http.routers.transmission.rule: 'Host(`transmission.${DOMAINNAME}`)'
+      traefik.http.routers.transmission.tls: 'true'
+      traefik.http.routers.transmission.tls.certresolver: 'wildcard-cloudflare'
 
   # ---------------------------------------------------------------------------- #
   #                                     Plex                                     #
   # ---------------------------------------------------------------------------- #
   plex:
-    image: lscr.io/linuxserver/plex
-    container_name: plex
+    container_name: 'plex'
+    image: 'lscr.io/linuxserver/plex'
+    restart: 'unless-stopped'
     dns:
-    - 8.8.8.8
-    # network_mode: host # Port: 32400
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - VERSION=docker
-      - PLEX_CLAIM=${PLEX_CLAIM} # Expires
-      - ADVERTISE_IP="http://${SERVER_IP}:32400"
-      - HOSTNAME=PiPlex
-    networks:
-      - apps
-      - proxy
-    volumes:
-      - $DOCKERDIR/plex/config:/config
-      - ${EXT_MOUNT_POINT}/Server/Music:/music
-      - ${EXT_MOUNT_POINT}/Server/TV series:/tv
-      - ${EXT_MOUNT_POINT}/Server/Movies:/movies
-      - ${EXT_MOUNT_POINT}/Server/Audiobooks:/audiobooks
-      - ${EXT_MOUNT_POINT}/Server/Other:/other
-      - ${EXT_MOUNT_POINT}/Torrents/complete:/new_dl
+      - '8.8.8.8'
     ports:
-      - 32400:32400
-      - 1900:1900/udp
-      - 3005:3005
-      - 5353/udp
-      - 8324:8324
-      - 32410:32410/udp
-      - 32412:32412/udp
-      - 32413:32413/udp
-      - 32414:32414/udp
-      - 32469:32469
-    restart: unless-stopped
+      - '32400:32400'
+      - '1900:1900/udp'
+      - '3005:3005'
+      - '5353/udp'
+      - '8324:8324'
+      - '32410:32410/udp'
+      - '32412:32412/udp'
+      - '32413:32413/udp'
+      - '32414:32414/udp'
+      - '32469:32469'
+    networks:
+      - 'apps'
+      - 'proxy'
+    volumes:
+      - '$DOCKERDIR/plex/config:/config'
+      - '${EXT_MOUNT_POINT}/Server/Music:/music'
+      - '${EXT_MOUNT_POINT}/Server/TV series:/tv'
+      - '${EXT_MOUNT_POINT}/Server/Movies:/movies'
+      - '${EXT_MOUNT_POINT}/Server/Audiobooks:/audiobooks'
+      - '${EXT_MOUNT_POINT}/Server/Other:/other'
+      - '${EXT_MOUNT_POINT}/Torrents/complete:/new_dl'
+    environment:
+      - 'PUID=1000'
+      - 'PGID=1000'
+      - 'VERSION=docker'
+      - 'PLEX_CLAIM=${PLEX_CLAIM}'
+      - 'ADVERTISE_IP="http://${SERVER_IP}:32400"'
+      - 'HOSTNAME=PiPlex'
     labels:
-      info: "(:32400)"
-      traefik.enable: "true"
-      traefik.http.routers.plex.rule: "Host(`plex.${DOMAINNAME}`)"
-      # traefik.http.services.plex.loadbalancer.server.port: 32400
-      traefik.http.routers.plex.entrypoints: "websecure"
-      traefik.http.routers.plex.tls: "true"
-      traefik.http.routers.plex.tls.certresolver: "wildcard-cloudflare"
-
-      # Redirect to ip to circumvent plex ownership issues
-      traefik.http.routers.plex.service: noop@internal
-      traefik.http.routers.plex.middlewares: to_plex_ip
-      traefik.http.middlewares.to_plex_ip.redirectregex.regex: ^https?://plex\.${DOMAINNAME}/(.*)
-      traefik.http.middlewares.to_plex_ip.redirectregex.replacement: http://${SERVER_IP}:32400/$$1
+      info: '(:32400)'
+      traefik.enable: 'true'
+      traefik.http.middlewares.to_plex_ip.redirectregex.regex: '^https?://plex\.${DOMAINNAME}/(.*)'
+      traefik.http.middlewares.to_plex_ip.redirectregex.replacement: 'http://${SERVER_IP}:32400/$$1'
+      traefik.http.routers.plex.entrypoints: 'websecure'
+      traefik.http.routers.plex.middlewares: 'to_plex_ip'
+      traefik.http.routers.plex.rule: 'Host(`plex.${DOMAINNAME}`)'
+      traefik.http.routers.plex.service: 'noop@internal'
+      traefik.http.routers.plex.tls: 'true'
+      traefik.http.routers.plex.tls.certresolver: 'wildcard-cloudflare'
 
   # ---------------------------------------------------------------------------- #
   #                               Whoami (http test)                              #
   # ---------------------------------------------------------------------------- #
   whoami:
-    image: traefik/whoami
-    container_name: "whoami"
+    container_name: 'whoami'
+    image: 'traefik/whoami'
     ports:
       - 80
     networks:
-      - apps
-      - proxy
+      - 'apps'
+      - 'proxy'
     labels:
-      traefik.enable: "true"
-      traefik.http.routers.whoami.rule: "Host(`whoami.${DOMAINNAME}`)"
-      traefik.http.routers.whoami.entrypoints: "websecure"
-      traefik.http.routers.whoami.tls: "true"
-      traefik.http.routers.whoami.tls.certresolver: "wildcard-cloudflare"
+      traefik.enable: 'true'
+      traefik.http.routers.whoami.entrypoints: 'websecure'
+      traefik.http.routers.whoami.rule: 'Host(`whoami.${DOMAINNAME}`)'
+      traefik.http.routers.whoami.tls: 'true'
+      traefik.http.routers.whoami.tls.certresolver: 'wildcard-cloudflare'
 
   # ---------------------------------------------------------------------------- #
   #                    OpenspeedtestLocal - speedtest for LAN                    #
   # ---------------------------------------------------------------------------- #
   openspeedtest:
-    image: openspeedtest/latest
-    container_name: openspeedtest
-    networks:
-      - proxy
-      - apps
+    container_name: 'openspeedtest'
+    image: 'openspeedtest/latest'
+    restart: 'unless-stopped'
     ports:
-      - 8081:8080
+      - '8081:8080'
+    networks:
+      - 'proxy'
+      - 'apps'
     environment:
-      TZ: $TZ
+      TZ: '$TZ'
     labels:
-      traefik.enable: "true"
-      ## HTTP Routers
-      traefik.http.routers.openspeedtest.entrypoints: "websecure"
-      traefik.http.routers.openspeedtest.tls: "true"
-      traefik.http.routers.openspeedtest.rule: "Host(`speedtest.$DOMAINNAME`)"
-      traefik.http.routers.openspeedtest.tls.certresolver: "wildcard-cloudflare"
-
-      ## HTTP Services
-      traefik.http.routers.openspeedtest.service: "openspeedtest-svc"
-      traefik.http.services.openspeedtest-svc.loadbalancer.server.port: "8080"
-    restart: unless-stopped
-
+      traefik.enable: 'true'
+      traefik.http.routers.openspeedtest.entrypoints: 'websecure'
+      traefik.http.routers.openspeedtest.rule: 'Host(`speedtest.$DOMAINNAME`)'
+      traefik.http.routers.openspeedtest.service: 'openspeedtest-svc'
+      traefik.http.routers.openspeedtest.tls: 'true'
+      traefik.http.routers.openspeedtest.tls.certresolver: 'wildcard-cloudflare'
+      traefik.http.services.openspeedtest-svc.loadbalancer.server.port: '8080'
   # dfremote:
   #   image: mifki/dfremote
   #   container_name: dfremote

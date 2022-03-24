@@ -19,61 +19,56 @@ services:
   #                                    Traefik                                   #
   # ---------------------------------------------------------------------------- #
   traefik:
-    image: "traefik:v2.6"
-    container_name: "traefik"
+    container_name: 'traefik'
+    image: 'traefik:v2.6'
+    restart: 'unless-stopped'
     dns:
-    - 8.8.8.8
-    command:
-    - "--api.dashboard=true"
-    - "--api.insecure=true"
-    - "--providers.docker=true"
-    - "--entrypoints.web.address=:80"
-    - "--entrypoints.websecure.address=:443"
-    - "--providers.docker.exposedbydefault=false"
-    # - --providers.docker.defaultrule=Host(`{{ index .Labels "com.docker.compose.service" }}.$DOMAINNAME`)
-    - "--pilot.token=$PILOT_TOKEN"
-
-    - --providers.docker.network=proxy
-    - --accessLog=true
-    - --accessLog.filePath=/traefik.log
-    - --accessLog.bufferingSize=100 # Configuring a buffer of 100 lines
-    - --accessLog.filters.statusCodes=400-599
-
-
-    - --certificatesresolvers.wildcard-cloudflare.acme.dnschallenge=true
-    - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.provider=cloudflare
-    # - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.resolvers=1.1.1.1:53,1.0.0.1:53
-    - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.disablepropagationcheck=true
-    - --certificatesresolvers.wildcard-cloudflare.acme.caserver=https://acme-v02.api.letsencrypt.org/directory
-    - --certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.delayBeforeCheck=10
-    - --certificatesresolvers.wildcard-cloudflare.acme.email=${CF_API_EMAIL}
-    - --certificatesresolvers.wildcard-cloudflare.acme.storage=/tls-certificates/acme.json
-    environment:
-      CF_API_EMAIL: ${CF_API_EMAIL}
-      CF_API_KEY: ${CF_API_KEY}
+      - '8.8.8.8'
     ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080"
+      - '80:80'
+      - '443:443'
+      - '8080:8080'
     networks:
-      - socket_proxy
-      - proxy
-      - apps
+      - 'socket_proxy'
+      - 'proxy'
+      - 'apps'
     volumes:
-      - $DOCKERDIR/traefik/traefik.log:/traefik.log
-      - $DOCKERDIR/traefik/tls-certificates:/tls-certificates
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-    restart: unless-stopped
+      - '$DOCKERDIR/traefik/traefik.log:/traefik.log'
+      - '$DOCKERDIR/traefik/tls-certificates:/tls-certificates'
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'
+    environment:
+      CF_API_EMAIL: '${CF_API_EMAIL}'
+      CF_API_KEY: '${CF_API_KEY}'
+    command:
+      - '--api.dashboard=true'
+      - '--api.insecure=true'
+      - '--providers.docker=true'
+      - '--entrypoints.web.address=:80'
+      - '--entrypoints.websecure.address=:443'
+      - '--providers.docker.exposedbydefault=false'
+      - '--pilot.token=$PILOT_TOKEN'
+      - '--providers.docker.network=proxy'
+      - '--accessLog=true'
+      - '--accessLog.filePath=/traefik.log'
+      - '--accessLog.bufferingSize=100'
+      - '--accessLog.filters.statusCodes=400-599'
+      - '--certificatesresolvers.wildcard-cloudflare.acme.dnschallenge=true'
+      - '--certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.provider=cloudflare'
+      - '--certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.disablepropagationcheck=true'
+      - '--certificatesresolvers.wildcard-cloudflare.acme.caserver=https://acme-v02.api.letsencrypt.org/directory'
+      - '--certificatesResolvers.wildcard-cloudflare.acme.dnsChallenge.delayBeforeCheck=10'
+      - '--certificatesresolvers.wildcard-cloudflare.acme.email=${CF_API_EMAIL}'
+      - '--certificatesresolvers.wildcard-cloudflare.acme.storage=/tls-certificates/acme.json'
     labels:
-      traefik.enable: "true"
-      traefik.http.routers.traefik.service: "api@internal"
-      traefik.http.routers.traefik.entrypoints: "websecure"
-      traefik.http.routers.traefik.rule: "Host(`traefik.${DOMAINNAME}`)"
-      traefik.http.routers.traefik.tls: "true"
-      traefik.http.routers.traefik.tls.certresolver: "wildcard-cloudflare"
-      traefik.http.routers.traefik.tls.domains[0].main: "${DOMAINNAME}"
-      traefik.http.routers.traefik.tls.domains[0].sans: "*.${DOMAINNAME}"
-      info: (:8080)
+      info: '(:8080)'
+      traefik.enable: 'true'
+      traefik.http.routers.traefik.entrypoints: 'websecure'
+      traefik.http.routers.traefik.rule: 'Host(`traefik.${DOMAINNAME}`)'
+      traefik.http.routers.traefik.service: 'api@internal'
+      traefik.http.routers.traefik.tls: 'true'
+      traefik.http.routers.traefik.tls.certresolver: 'wildcard-cloudflare'
+      traefik.http.routers.traefik.tls.domains[0].main: '${DOMAINNAME}'
+      traefik.http.routers.traefik.tls.domains[0].sans: '*.${DOMAINNAME}'
 
   # ---------------------------------------------------------------------------- #
   #                               Pi-Hole & Unbound                              #
@@ -96,64 +91,56 @@ services:
   #       ipv4_address: 10.0.92.22
 
   pihole:
-    container_name: pihole
-    # depends_on: [unbound]
-    image: pihole/pihole:latest
-    ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-      - "67:67/udp"
-      - "81:80/tcp"
-    environment:
-      TZ: '${TZ}'
-      # Unbound IP
-      DNS1: 1.1.1.1 #10.0.92.22#53
-      DNS2: 1.0.0.1 #10.0.92.22#53
-      IPv6: "no"
-      PROXY_LOCATION: pihole
-      VIRTUAL_HOST: pihole.${DOMAINNAME}
-      DNSMASQ_LISTENING: all
-      WEBPASSWORD: ${PIHOLE_PW}
+    container_name: 'pihole'
+    image: 'pihole/pihole:latest'
+    restart: 'unless-stopped'
     dns:
-    - 127.0.0.1
-    # - 10.0.92.22:53 # Points to unbound
+      - '127.0.0.1'
+    ports:
+      - '53:53/tcp'
+      - '53:53/udp'
+      - '67:67/udp'
+      - '81:80/tcp'
+    cap_add:
+      - 'NET_ADMIN'
+    networks:
+      apps:
+        ipv4_address: '10.0.92.33'
+      proxy: null
     volumes:
       - '$DOCKERDIR/pi-hole/etc-pihole:/etc/pihole'
       - '$DOCKERDIR/pi-hole/etc-dnsmasq.d:/etc/dnsmasq.d'
-    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
-    cap_add:
-      - NET_ADMIN
-    restart: unless-stopped # Recommended but not required (DHCP needs NET_ADMIN)
-    networks:
-      proxy:
-      apps:
-        ipv4_address: 10.0.92.33
-      # pihole_net:
-      #   ipv4_address: 10.0.0.3
+    environment:
+      DNS1: '1.1.1.1'
+      DNS2: '1.0.0.1'
+      DNSMASQ_LISTENING: 'all'
+      IPv6: 'no'
+      PROXY_LOCATION: 'pihole'
+      TZ: '${TZ}'
+      VIRTUAL_HOST: 'pihole.${DOMAINNAME}'
+      WEBPASSWORD: '${PIHOLE_PW}'
     labels:
-      info: "(:81)"
-      traefik.enable: "true"
-      traefik.http.routers.pihole.rule: "Host(`pihole.${DOMAINNAME}`)"
-      traefik.http.routers.pihole.entrypoints: "websecure"
-      traefik.http.routers.pihole.tls: "true"
-      traefik.http.routers.pihole.tls.certresolver: "wildcard-cloudflare"
-      traefik.http.services.pihole.loadBalancer.server.port: "80"
-
-      # traefik.http.routers.pihole.service: "pihole"
+      info: '(:81)'
+      traefik.enable: 'true'
+      traefik.http.routers.pihole.entrypoints: 'websecure'
+      traefik.http.routers.pihole.rule: 'Host(`pihole.${DOMAINNAME}`)'
+      traefik.http.routers.pihole.tls: 'true'
+      traefik.http.routers.pihole.tls.certresolver: 'wildcard-cloudflare'
+      traefik.http.services.pihole.loadBalancer.server.port: '80'
 
   # ---------------------------------------------------------------------------- #
   #       Docker Socket Proxy - Security Enchanced Proxy for Docker Socket       #
   # ---------------------------------------------------------------------------- #
   socket-proxy:
-    container_name: socket-proxy
-    image: tecnativa/docker-socket-proxy
-    restart: always
+    container_name: 'socket-proxy'
+    image: 'tecnativa/docker-socket-proxy'
+    restart: 'always'
     networks:
       socket_proxy:
-        ipv4_address: 10.0.91.254
-    privileged: true
+        ipv4_address: '10.0.91.254'
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    privileged: true
     environment:
       - LOG_LEVEL=info # debug,info,notice,warning,err,crit,alert,emerg
       ## Variables match the URL prefix (i.e. AUTH blocks access to /auth/* parts of the API, etc.).

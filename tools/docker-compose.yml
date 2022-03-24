@@ -19,97 +19,82 @@ services:
   #                                   Portainer                                  #
   # ---------------------------------------------------------------------------- #
   portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    restart: unless-stopped
+    container_name: 'portainer'
+    image: 'portainer/portainer-ce:latest'
+    restart: 'unless-stopped'
     networks:
-      - proxy
-      - socket_proxy
-      - apps
+      - 'proxy'
+      - 'socket_proxy'
+      - 'apps'
     security_opt:
-      - no-new-privileges:true
+      - 'no-new-privileges:true'
     volumes:
-      - $DOCKERDIR/portainer/data:/data # Change to local directory if you want to save/transfer config locally
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /:/host
-
+      - '$DOCKERDIR/portainer/data:/data'
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'
+      - '/:/host'
     environment:
-      - TZ=$TZ
+      - 'TZ=$TZ'
     labels:
-      traefik.enable: "true"
-      traefik.docker.network: "proxy"
-      ## HTTP Routers
-      traefik.http.routers.portainer.entrypoints: "websecure"
-      traefik.http.routers.portainer.tls: "true"
-      traefik.http.routers.portainer.tls.certresolver: "wildcard-cloudflare"
-      traefik.http.routers.portainer.rule: "Host(`portainer.$DOMAINNAME`)"
-
-      ## HTTP Services
-      traefik.http.routers.portainer.service: "portainer-svc"
-      traefik.http.services.portainer-svc.loadbalancer.server.port: "9000"
+      traefik.docker.network: 'proxy'
+      traefik.enable: 'true'
+      traefik.http.routers.portainer.entrypoints: 'websecure'
+      traefik.http.routers.portainer.rule: 'Host(`portainer.$DOMAINNAME`)'
+      traefik.http.routers.portainer.service: 'portainer-svc'
+      traefik.http.routers.portainer.tls: 'true'
+      traefik.http.routers.portainer.tls.certresolver: 'wildcard-cloudflare'
+      traefik.http.services.portainer-svc.loadbalancer.server.port: '9000'
 
   # ---------------------------------------------------------------------------- #
   #                         Glances - System Information                         #
   # ---------------------------------------------------------------------------- #
   glances:
-    image: jdreinhardt/glances:release
-    container_name: glances
-    restart: unless-stopped
-    privileged: true
+    container_name: 'glances'
+    image: 'jdreinhardt/glances:release'
+    restart: 'unless-stopped'
     networks:
-      - proxy
-      - socket_proxy
-      - apps
-    # depends_on:
-    #   - socket-proxy
+      - 'proxy'
+      - 'socket_proxy'
+      - 'apps'
     security_opt:
-      - no-new-privileges:true
-    pid: host
-    # volumes:
-    #   - $DOCKERDIR/glances/glances.conf:/glances/conf/glances.conf # Use this if you want to add a glances.conf file
+      - 'no-new-privileges:true'
     environment:
-      # GLANCES_OPT: "-C /glances/conf/glances.conf --quiet --export influxdb"
-      GLANCES_OPT: "-w"
-      DOCKER_HOST: tcp://socket-proxy:2375
+      DOCKER_HOST: 'tcp://socket-proxy:2375'
+      GLANCES_OPT: '-w'
     labels:
-      traefik.enable: "true"
-      traefik.docker.network: "proxy"
-      ## HTTP Routers
-      traefik.http.routers.glances.entrypoints: "websecure"
-      traefik.http.routers.glances.tls: "true"
-      traefik.http.routers.glances.rule: "Host(`glances.$DOMAINNAME`)"
-      traefik.http.routers.glances.tls.certresolver: "wildcard-cloudflare"
-      ## HTTP Services
-      traefik.http.routers.glances.service: "glances-svc"
-      traefik.http.services.glances-svc.loadbalancer.server.port: "61208"
+      traefik.docker.network: 'proxy'
+      traefik.enable: 'true'
+      traefik.http.routers.glances.entrypoints: 'websecure'
+      traefik.http.routers.glances.rule: 'Host(`glances.$DOMAINNAME`)'
+      traefik.http.routers.glances.service: 'glances-svc'
+      traefik.http.routers.glances.tls: 'true'
+      traefik.http.routers.glances.tls.certresolver: 'wildcard-cloudflare'
+      traefik.http.services.glances-svc.loadbalancer.server.port: '61208'
+    pid: 'host'
+    privileged: true
 
   # ---------------------------------------------------------------------------- #
   #                     Dozzle - Real-time Docker Log Viewer                     #
   # ---------------------------------------------------------------------------- #
   dozzle:
-    image: amir20/dozzle:latest
-    container_name: dozzle
-    restart: unless-stopped
+    container_name: 'dozzle'
+    image: 'amir20/dozzle:latest'
+    restart: 'unless-stopped'
     networks:
-      - proxy
-      - socket_proxy
-      - apps
-    # depends_on:
-    #   - socket-proxy
+      - 'proxy'
+      - 'socket_proxy'
+      - 'apps'
     security_opt:
-      - no-new-privileges:true
+      - 'no-new-privileges:true'
     environment:
-      DOZZLE_LEVEL: info
+      DOCKER_HOST: 'tcp://socket-proxy:2375'
+      DOZZLE_FILTER: 'status=running'
+      DOZZLE_LEVEL: 'info'
       DOZZLE_TAILSIZE: 300
-      DOZZLE_FILTER: "status=running"
-      DOCKER_HOST: tcp://socket-proxy:2375
     labels:
-      traefik.enable: "true"
-      ## HTTP Routers
-      traefik.http.routers.dozzle.entrypoints: "websecure"
-      traefik.http.routers.dozzle.tls: "true"
-      traefik.http.routers.dozzle.rule: "Host(`dozzle.$DOMAINNAME`)"
-      traefik.http.routers.dozzle.tls.certresolver: "wildcard-cloudflare"
-      ## HTTP Services
-      traefik.http.routers.dozzle.service: "dozzle-svc"
-      traefik.http.services.dozzle-svc.loadbalancer.server.port: "8080"
+      traefik.enable: 'true'
+      traefik.http.routers.dozzle.entrypoints: 'websecure'
+      traefik.http.routers.dozzle.rule: 'Host(`dozzle.$DOMAINNAME`)'
+      traefik.http.routers.dozzle.service: 'dozzle-svc'
+      traefik.http.routers.dozzle.tls: 'true'
+      traefik.http.routers.dozzle.tls.certresolver: 'wildcard-cloudflare'
+      traefik.http.services.dozzle-svc.loadbalancer.server.port: '8080'
