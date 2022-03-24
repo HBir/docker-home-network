@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3.9'
 
 # --------------------------------- Networks --------------------------------- #
 networks:
@@ -58,9 +58,9 @@ services:
       # - WHITELIST=iplist #optional
       # - PEERPORT=peerport #optional
       # - HOST_WHITELIST=dnsnane list #optional
-    # networks:
-    #   - proxy
-    #   - apps
+    networks:
+      - proxy
+      - apps
     volumes:
       - $DOCKERDIR/transmission/config:/config
       - ${EXT_MOUNT_POINT}/Torrents:/downloads
@@ -169,10 +169,26 @@ services:
       traefik.http.routers.openspeedtest.entrypoints: "websecure"
       traefik.http.routers.openspeedtest.tls: "true"
       traefik.http.routers.openspeedtest.rule: "Host(`speedtest.$DOMAINNAME`)"
+      traefik.http.routers.openspeedtest.tls.certresolver: "wildcard-cloudflare"
+
       ## HTTP Services
       traefik.http.routers.openspeedtest.service: "openspeedtest-svc"
       traefik.http.services.openspeedtest-svc.loadbalancer.server.port: "8080"
     restart: unless-stopped
+
+  # dfremote:
+  #   image: mifki/dfremote
+  #   container_name: dfremote
+  #   # networks:
+  #   #   - proxy
+  #   #   - apps
+  #   # ports:
+  #   #   - 1235:1235/udp
+  #   network_mode: host
+  #   # stdin_open: true # docker run -i
+  #   tty: true        # docker run -t
+
+
 
 
   # ---------------------------------------------------------------------------- #

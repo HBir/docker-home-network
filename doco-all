@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Runs docker-compose command in all subfolders.
+# $1 - docker-compose command, default "up"
+# $2 - option
+
+[[ ! -z $1 ]] && ARG=$1 || ARG="up"
+[[ ! -z $2 ]] && OPTION=$2 || OPTION=""
+
+PROJECTS=$(ls -d */)
+
+for DIR in $PROJECTS
+do
+    docker-compose --file ./${DIR}docker-compose.yml ${ARG} -d ${OPTION}
+done
