@@ -90,43 +90,70 @@ services:
   #     apps:
   #       ipv4_address: 10.0.92.22
 
-  pihole:
-    container_name: 'pihole'
-    image: 'pihole/pihole:latest'
+  # pihole:
+  #   container_name: 'pihole'
+  #   image: 'pihole/pihole:latest'
+  #   restart: 'unless-stopped'
+  #   dns:
+  #     - '127.0.0.1'
+  #   ports:
+  #     - '53:53/tcp'
+  #     - '53:53/udp'
+  #     - '67:67/udp'
+  #     - '81:80/tcp'
+  #   cap_add:
+  #     - 'NET_ADMIN'
+  #   networks:
+  #     apps:
+  #       ipv4_address: '10.0.92.33'
+  #     proxy: null
+  #   volumes:
+  #     - '$DOCKERDIR/pi-hole/etc-pihole:/etc/pihole'
+  #     - '$DOCKERDIR/pi-hole/etc-dnsmasq.d:/etc/dnsmasq.d'
+  #   environment:
+  #     DNS1: '1.1.1.1'
+  #     DNS2: '1.0.0.1'
+  #     DNSMASQ_LISTENING: 'all'
+  #     IPv6: 'no'
+  #     PROXY_LOCATION: 'pihole'
+  #     TZ: '${TZ}'
+  #     VIRTUAL_HOST: 'pihole.${DOMAINNAME}'
+  #     WEBPASSWORD: '${PIHOLE_PW}'
+  #   labels:
+  #     info: '(:81)'
+  #     traefik.enable: 'true'
+  #     traefik.http.routers.pihole.entrypoints: 'websecure'
+  #     traefik.http.routers.pihole.rule: 'Host(`pihole.${DOMAINNAME}`)'
+  #     traefik.http.routers.pihole.tls: 'true'
+  #     traefik.http.routers.pihole.tls.certresolver: 'wildcard-cloudflare'
+  #     traefik.http.services.pihole.loadBalancer.server.port: '80'
+
+  adguardhome:
+    container_name: 'adguard'
+    image: 'adguard/adguardhome'
     restart: 'unless-stopped'
-    dns:
-      - '127.0.0.1'
     ports:
       - '53:53/tcp'
       - '53:53/udp'
-      - '67:67/udp'
       - '81:80/tcp'
-    cap_add:
-      - 'NET_ADMIN'
+      - '444:443/tcp'
+      - '443:443/udp'
+      - '3000:3000/tcp'
     networks:
       apps:
         ipv4_address: '10.0.92.33'
-      proxy: null
+      proxy:
     volumes:
-      - '$DOCKERDIR/pi-hole/etc-pihole:/etc/pihole'
-      - '$DOCKERDIR/pi-hole/etc-dnsmasq.d:/etc/dnsmasq.d'
-    environment:
-      DNS1: '1.1.1.1'
-      DNS2: '1.0.0.1'
-      DNSMASQ_LISTENING: 'all'
-      IPv6: 'no'
-      PROXY_LOCATION: 'pihole'
-      TZ: '${TZ}'
-      VIRTUAL_HOST: 'pihole.${DOMAINNAME}'
-      WEBPASSWORD: '${PIHOLE_PW}'
+      - './adguard-work:/opt/adguardhome/work'
+      - './adguard-conf:/opt/adguardhome/conf'
     labels:
       info: '(:81)'
       traefik.enable: 'true'
-      traefik.http.routers.pihole.entrypoints: 'websecure'
-      traefik.http.routers.pihole.rule: 'Host(`pihole.${DOMAINNAME}`)'
-      traefik.http.routers.pihole.tls: 'true'
-      traefik.http.routers.pihole.tls.certresolver: 'wildcard-cloudflare'
-      traefik.http.services.pihole.loadBalancer.server.port: '80'
+      traefik.http.routers.adguard.entrypoints: 'websecure'
+      traefik.http.routers.adguard.rule: 'Host(`adguard.${DOMAINNAME}`)'
+      traefik.http.routers.adguard.tls: 'true'
+      traefik.http.routers.adguard.tls.certresolver: 'wildcard-cloudflare'
+      traefik.http.services.adguard.loadBalancer.server.port: '80'
 
   # ---------------------------------------------------------------------------- #
   #       Docker Socket Proxy - Security Enchanced Proxy for Docker Socket       #
