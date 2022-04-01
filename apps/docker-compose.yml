@@ -143,25 +143,56 @@ services:
   # ---------------------------------------------------------------------------- #
   #                    OpenspeedtestLocal - speedtest for LAN                    #
   # ---------------------------------------------------------------------------- #
-  openspeedtest:
-    container_name: 'openspeedtest'
-    image: 'openspeedtest/latest'
+  # openspeedtest:
+  #   container_name: 'openspeedtest'
+  #   image: 'openspeedtest/latest'
+  #   restart: 'unless-stopped'
+  #   ports:
+  #     - '8081:8080'
+  #   networks:
+  #     - 'proxy'
+  #     - 'apps'
+  #   environment:
+  #     TZ: '$TZ'
+  #   labels:
+  #     traefik.enable: 'true'
+  #     traefik.http.routers.openspeedtest.entrypoints: 'websecure'
+  #     traefik.http.routers.openspeedtest.rule: 'Host(`speedtest.$DOMAINNAME`)'
+  #     traefik.http.routers.openspeedtest.service: 'openspeedtest-svc'
+  #     traefik.http.routers.openspeedtest.tls: 'true'
+  #     traefik.http.routers.openspeedtest.tls.certresolver: 'wildcard-cloudflare'
+  #     traefik.http.services.openspeedtest-svc.loadbalancer.server.port: '8080'
+
+  code-server:
+    container_name: 'code-server'
+    dns:
+      - 1.1.1.1
+    image: 'lscr.io/linuxserver/code-server'
     restart: 'unless-stopped'
     ports:
-      - '8081:8080'
+      - '8443:8443'
     networks:
-      - 'proxy'
       - 'apps'
+      - 'proxy'
+    volumes:
+      - '/home/pi/Docker:/Docker'
+      - $DOCKERDIR/codeserver/config:/config
     environment:
-      TZ: '$TZ'
+      - 'PUID=1000'
+      - 'PGID=1000'
+      - 'TZ=$TZ'
+      - 'PROXY_DOMAIN=code.$DOMAINNAME'
+      - 'DEFAULT_WORKSPACE=/Docker'
     labels:
       traefik.enable: 'true'
-      traefik.http.routers.openspeedtest.entrypoints: 'websecure'
-      traefik.http.routers.openspeedtest.rule: 'Host(`speedtest.$DOMAINNAME`)'
-      traefik.http.routers.openspeedtest.service: 'openspeedtest-svc'
-      traefik.http.routers.openspeedtest.tls: 'true'
-      traefik.http.routers.openspeedtest.tls.certresolver: 'wildcard-cloudflare'
-      traefik.http.services.openspeedtest-svc.loadbalancer.server.port: '8080'
+      traefik.http.routers.codeserver.entrypoints: 'websecure'
+      traefik.http.routers.codeserver.rule: 'Host(`code.$DOMAINNAME`)'
+      traefik.http.routers.codeserver.service: 'codeserver-svc'
+      traefik.http.routers.codeserver.tls: 'true'
+      traefik.http.routers.codeserver.tls.certresolver: 'wildcard-cloudflare'
+      traefik.http.services.codeserver-svc.loadbalancer.server.port: '8443'
+
+
   # dfremote:
   #   image: mifki/dfremote
   #   container_name: dfremote
