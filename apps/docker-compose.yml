@@ -5,6 +5,9 @@ networks:
   proxy:
     external:
       name: proxy
+  socket_proxy:
+    external:
+      name: socket_proxy
   apps:
     external:
       name: apps
@@ -140,29 +143,6 @@ services:
       traefik.http.routers.whoami.tls: 'true'
       traefik.http.routers.whoami.tls.certresolver: 'wildcard-cloudflare'
 
-  # ---------------------------------------------------------------------------- #
-  #                    OpenspeedtestLocal - speedtest for LAN                    #
-  # ---------------------------------------------------------------------------- #
-  # openspeedtest:
-  #   container_name: 'openspeedtest'
-  #   image: 'openspeedtest/latest'
-  #   restart: 'unless-stopped'
-  #   ports:
-  #     - '8081:8080'
-  #   networks:
-  #     - 'proxy'
-  #     - 'apps'
-  #   environment:
-  #     TZ: '$TZ'
-  #   labels:
-  #     traefik.enable: 'true'
-  #     traefik.http.routers.openspeedtest.entrypoints: 'websecure'
-  #     traefik.http.routers.openspeedtest.rule: 'Host(`speedtest.$DOMAINNAME`)'
-  #     traefik.http.routers.openspeedtest.service: 'openspeedtest-svc'
-  #     traefik.http.routers.openspeedtest.tls: 'true'
-  #     traefik.http.routers.openspeedtest.tls.certresolver: 'wildcard-cloudflare'
-  #     traefik.http.services.openspeedtest-svc.loadbalancer.server.port: '8080'
-
   code-server:
     container_name: 'code-server'
     dns:
@@ -193,17 +173,50 @@ services:
       traefik.http.services.codeserver-svc.loadbalancer.server.port: '8443'
 
 
-  # dfremote:
-  #   image: mifki/dfremote
-  #   container_name: dfremote
-  #   # networks:
-  #   #   - proxy
-  #   #   - apps
-  #   # ports:
-  #   #   - 1235:1235/udp
-  #   network_mode: host
-  #   # stdin_open: true # docker run -i
-  #   tty: true        # docker run -t
+  # ---------------------------------------------------------------------------- #
+  #                     Deconz / Phoscon - Zigbee controller                     #
+  # ---------------------------------------------------------------------------- #
+  deconz:
+    container_name: 'deconz'
+    image: 'deconzcommunity/deconz'
+    restart: 'always'
+    dns: '1.1.1.1'
+    ports:
+      - '8089:8089'
+      - '8091:8091'
+    networks:
+      - 'apps'
+      - 'socket_proxy'
+      - 'proxy'
+    volumes:
+      - '$DOCKERDIR/deconz:/opt/deCONZ'
+    devices:
+      - '/dev/ttyACM0'
+    environment:
+      - 'DECONZ_WEB_PORT=8089'
+      - 'DECONZ_WS_PORT=8091'
+      - 'DECONZ_DEVICE=/dev/ttyACM0'
+      - 'DEBUG_INFO=1'
+      - 'DEBUG_APS=0'
+      - 'DEBUG_ZCL=0'
+      - 'DEBUG_ZDP=0'
+      - 'DEBUG_OTAU=0'
+      - 'TZ=$TZ'
+    labels:
+      traefik.enable: 'true'
+      traefik.http.routers.deconz.entrypoints: 'websecure'
+      traefik.http.routers.deconz.rule: 'Host(`phoscon.$DOMAINNAME`)'
+      traefik.http.routers.deconz.service: 'deconz-svc'
+      traefik.http.routers.deconz.tls: 'true'
+      traefik.http.routers.deconz.tls.certresolver: 'wildcard-cloudflare'
+      traefik.http.services.deconz-svc.loadbalancer.server.port: '8089'
+
+      # traefik.http.routers.deconz2.entrypoints: 'websecure'
+      # traefik.http.routers.deconz2.rule: 'Host(`deconz2.$DOMAINNAME`)'
+      # traefik.http.routers.deconz2.service: 'deconz2-svc'
+      # traefik.http.routers.deconz2.tls: 'true'
+      # traefik.http.routers.deconz2.tls.certresolver: 'wildcard-cloudflare'
+      # traefik.http.services.deconz2-svc.loadbalancer.server.port: '8091'
 
 
 
@@ -228,4 +241,25 @@ services:
   # Box 64
 
 
-
+  # ---------------------------------------------------------------------------- #
+  #                    OpenspeedtestLocal - speedtest for LAN                    #
+  # ---------------------------------------------------------------------------- #
+  # openspeedtest:
+  #   container_name: 'openspeedtest'
+  #   image: 'openspeedtest/latest'
+  #   restart: 'unless-stopped'
+  #   ports:
+  #     - '8081:8080'
+  #   networks:
+  #     - 'proxy'
+  #     - 'apps'
+  #   environment:
+  #     TZ: '$TZ'
+  #   labels:
+  #     traefik.enable: 'true'
+  #     traefik.http.routers.openspeedtest.entrypoints: 'websecure'
+  #     traefik.http.routers.openspeedtest.rule: 'Host(`speedtest.$DOMAINNAME`)'
+  #     traefik.http.routers.openspeedtest.service: 'openspeedtest-svc'
+  #     traefik.http.routers.openspeedtest.tls: 'true'
+  #     traefik.http.routers.openspeedtest.tls.certresolver: 'wildcard-cloudflare'
+  #     traefik.http.services.openspeedtest-svc.loadbalancer.server.port: '8080'

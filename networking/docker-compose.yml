@@ -75,63 +75,8 @@ services:
       traefik.http.routers.traefik.tls.domains[0].sans: '*.${DOMAINNAME}'
 
   # ---------------------------------------------------------------------------- #
-  #                               Pi-Hole & Unbound                              #
+  #                                 Adguard Home                                 #
   # ---------------------------------------------------------------------------- #
-  # unbound:
-  #   container_name: unbound
-  #   image: klutchell/unbound
-  #   dns:
-  #     - 1.1.1.1
-  #   # command:
-  #     # - --health-cmd "dig sigok.verteiltesysteme.net @127.0.0.1"
-  #   # healthcheck:
-  #   #   test: dig sigok.verteiltesysteme.net @127.0.0.1 +dnssec | grep NOERROR
-  #   restart: unless-stopped
-  #   volumes:
-  #     - $DOCKERDIR/unbound/unbound.conf:/etc/unbound/unbound.conf
-  #     - $DOCKERDIR/unbound/a-records.conf:/etc/unbound/a-records.conf
-  #   networks:
-  #     apps:
-  #       ipv4_address: 10.0.92.22
-
-  # pihole:
-  #   container_name: 'pihole'
-  #   image: 'pihole/pihole:latest'
-  #   restart: 'unless-stopped'
-  #   dns:
-  #     - '127.0.0.1'
-  #   ports:
-  #     - '53:53/tcp'
-  #     - '53:53/udp'
-  #     - '67:67/udp'
-  #     - '81:80/tcp'
-  #   cap_add:
-  #     - 'NET_ADMIN'
-  #   networks:
-  #     apps:
-  #       ipv4_address: '10.0.92.33'
-  #     proxy: null
-  #   volumes:
-  #     - '$DOCKERDIR/pi-hole/etc-pihole:/etc/pihole'
-  #     - '$DOCKERDIR/pi-hole/etc-dnsmasq.d:/etc/dnsmasq.d'
-  #   environment:
-  #     DNS1: '1.1.1.1'
-  #     DNS2: '1.0.0.1'
-  #     DNSMASQ_LISTENING: 'all'
-  #     IPv6: 'no'
-  #     PROXY_LOCATION: 'pihole'
-  #     TZ: '${TZ}'
-  #     VIRTUAL_HOST: 'pihole.${DOMAINNAME}'
-  #     WEBPASSWORD: '${PIHOLE_PW}'
-  #   labels:
-  #     info: '(:81)'
-  #     traefik.enable: 'true'
-  #     traefik.http.routers.pihole.entrypoints: 'websecure'
-  #     traefik.http.routers.pihole.rule: 'Host(`pihole.${DOMAINNAME}`)'
-  #     traefik.http.routers.pihole.tls: 'true'
-  #     traefik.http.routers.pihole.tls.certresolver: 'wildcard-cloudflare'
-  #     traefik.http.services.pihole.loadBalancer.server.port: '80'
-
   adguardhome:
     container_name: 'adguard'
     image: 'adguard/adguardhome'
@@ -250,8 +195,3 @@ services:
   #   networks:
   #     apps:
   #   restart: unless-stopped
-
-
-
-
-
