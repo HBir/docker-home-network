@@ -45,132 +45,132 @@ services:
   # ---------------------------------------------------------------------------- #
   #                                 Transmission                                 #
   # ---------------------------------------------------------------------------- #
-  transmission:
-    container_name: 'transmission'
-    image: 'lscr.io/linuxserver/transmission'
-    ports:
-      - '9091:9091'
-      - '51413:51413'
-      - '51413:51413/udp'
-    networks:
-      - 'proxy'
-      - 'apps'
-    volumes:
-      - '$DOCKERDIR/transmission/config:/config'
-      - '${EXT_MOUNT_POINT}/Torrents:/downloads'
-      - '${EXT_MOUNT_POINT}/Server/Watch:/watch'
-    restart: 'unless-stopped'
-    environment:
-      - 'PUID=1000'
-      - 'PGID=1000'
-      - 'TZ=${TZ}'
-      - 'TRANSMISSION_WEB_HOME=/combustion-release/'
-      - 'VIRTUAL_HOST=transmission.local'
-      - 'VIRTUAL_PORT=9091'
-    labels:
-      info: '(:9091)'
-      traefik.enable: 'true'
-      traefik.http.routers.transmission.entrypoints: 'websecure'
-      traefik.http.routers.transmission.rule: 'Host(`transmission.${DOMAINNAME}`)'
-      traefik.http.routers.transmission.tls: 'true'
-      traefik.http.routers.transmission.tls.certresolver: 'wildcard-cloudflare'
+  # transmission:
+  #   container_name: 'transmission'
+  #   image: 'lscr.io/linuxserver/transmission'
+  #   ports:
+  #     - '9091:9091'
+  #     - '51413:51413'
+  #     - '51413:51413/udp'
+  #   networks:
+  #     - 'proxy'
+  #     - 'apps'
+  #   volumes:
+  #     - '$DOCKERDIR/transmission/config:/config'
+  #     - '${EXT_MOUNT_POINT}/Torrents:/downloads'
+  #     - '${EXT_MOUNT_POINT}/Server/Watch:/watch'
+  #   restart: 'unless-stopped'
+  #   environment:
+  #     - 'PUID=1000'
+  #     - 'PGID=1000'
+  #     - 'TZ=${TZ}'
+  #     - 'TRANSMISSION_WEB_HOME=/combustion-release/'
+  #     - 'VIRTUAL_HOST=transmission.local'
+  #     - 'VIRTUAL_PORT=9091'
+  #   labels:
+  #     info: '(:9091)'
+  #     traefik.enable: 'true'
+  #     traefik.http.routers.transmission.entrypoints: 'websecure'
+  #     traefik.http.routers.transmission.rule: 'Host(`transmission.${DOMAINNAME}`)'
+  #     traefik.http.routers.transmission.tls: 'true'
+  #     traefik.http.routers.transmission.tls.certresolver: 'wildcard-cloudflare'
 
   # ---------------------------------------------------------------------------- #
   #                                     Plex                                     #
   # ---------------------------------------------------------------------------- #
-  plex:
-    container_name: 'plex'
-    image: 'lscr.io/linuxserver/plex'
-    restart: 'unless-stopped'
-    dns:
-      - '8.8.8.8'
-    ports:
-      - '32400:32400'
-      - '1900:1900/udp'
-      - '3005:3005'
-      - '5353/udp'
-      - '8324:8324'
-      - '32410:32410/udp'
-      - '32412:32412/udp'
-      - '32413:32413/udp'
-      - '32414:32414/udp'
-      - '32469:32469'
-    networks:
-      - 'apps'
-      - 'proxy'
-    volumes:
-      - '$DOCKERDIR/plex/config:/config'
-      - '${EXT_MOUNT_POINT}/Server/Music:/music'
-      - '${EXT_MOUNT_POINT}/Server/TV series:/tv'
-      - '${EXT_MOUNT_POINT}/Server/Movies:/movies'
-      - '${EXT_MOUNT_POINT}/Server/Audiobooks:/audiobooks'
-      - '${EXT_MOUNT_POINT}/Server/Other:/other'
-      - '${EXT_MOUNT_POINT}/Torrents/complete:/new_dl'
-    environment:
-      - 'PUID=1000'
-      - 'PGID=1000'
-      - 'VERSION=docker'
-      - 'PLEX_CLAIM=${PLEX_CLAIM}'
-      - 'ADVERTISE_IP="http://${SERVER_IP}:32400"'
-      - 'HOSTNAME=PiPlex'
-    labels:
-      info: '(:32400)'
-      traefik.enable: 'true'
-      traefik.http.middlewares.to_plex_ip.redirectregex.regex: '^https?://plex\.${DOMAINNAME}/(.*)'
-      traefik.http.middlewares.to_plex_ip.redirectregex.replacement: 'http://${SERVER_IP}:32400/$$1'
-      traefik.http.routers.plex.entrypoints: 'websecure'
-      traefik.http.routers.plex.middlewares: 'to_plex_ip'
-      traefik.http.routers.plex.rule: 'Host(`plex.${DOMAINNAME}`)'
-      traefik.http.routers.plex.service: 'noop@internal'
-      traefik.http.routers.plex.tls: 'true'
-      traefik.http.routers.plex.tls.certresolver: 'wildcard-cloudflare'
+  # plex:
+  #   container_name: 'plex'
+  #   image: 'lscr.io/linuxserver/plex'
+  #   restart: 'unless-stopped'
+  #   dns:
+  #     - '8.8.8.8'
+  #   ports:
+  #     - '32400:32400'
+  #     - '1900:1900/udp'
+  #     - '3005:3005'
+  #     - '5353/udp'
+  #     - '8324:8324'
+  #     - '32410:32410/udp'
+  #     - '32412:32412/udp'
+  #     - '32413:32413/udp'
+  #     - '32414:32414/udp'
+  #     - '32469:32469'
+  #   networks:
+  #     - 'apps'
+  #     - 'proxy'
+  #   volumes:
+  #     - '$DOCKERDIR/plex/config:/config'
+  #     - '${EXT_MOUNT_POINT}/Server/Music:/music'
+  #     - '${EXT_MOUNT_POINT}/Server/TV series:/tv'
+  #     - '${EXT_MOUNT_POINT}/Server/Movies:/movies'
+  #     - '${EXT_MOUNT_POINT}/Server/Audiobooks:/audiobooks'
+  #     - '${EXT_MOUNT_POINT}/Server/Other:/other'
+  #     - '${EXT_MOUNT_POINT}/Torrents/complete:/new_dl'
+  #   environment:
+  #     - 'PUID=1000'
+  #     - 'PGID=1000'
+  #     - 'VERSION=docker'
+  #     - 'PLEX_CLAIM=${PLEX_CLAIM}'
+  #     - 'ADVERTISE_IP="http://${SERVER_IP}:32400"'
+  #     - 'HOSTNAME=PiPlex'
+  #   labels:
+  #     info: '(:32400)'
+  #     traefik.enable: 'true'
+  #     traefik.http.middlewares.to_plex_ip.redirectregex.regex: '^https?://plex\.${DOMAINNAME}/(.*)'
+  #     traefik.http.middlewares.to_plex_ip.redirectregex.replacement: 'http://${SERVER_IP}:32400/$$1'
+  #     traefik.http.routers.plex.entrypoints: 'websecure'
+  #     traefik.http.routers.plex.middlewares: 'to_plex_ip'
+  #     traefik.http.routers.plex.rule: 'Host(`plex.${DOMAINNAME}`)'
+  #     traefik.http.routers.plex.service: 'noop@internal'
+  #     traefik.http.routers.plex.tls: 'true'
+  #     traefik.http.routers.plex.tls.certresolver: 'wildcard-cloudflare'
 
   # ---------------------------------------------------------------------------- #
   #                               Whoami (http test)                              #
   # ---------------------------------------------------------------------------- #
-  whoami:
-    container_name: 'whoami'
-    image: 'traefik/whoami'
-    ports:
-      - 80
-    networks:
-      - 'apps'
-      - 'proxy'
-    labels:
-      traefik.enable: 'true'
-      traefik.http.routers.whoami.entrypoints: 'websecure'
-      traefik.http.routers.whoami.rule: 'Host(`whoami.${DOMAINNAME}`)'
-      traefik.http.routers.whoami.tls: 'true'
-      traefik.http.routers.whoami.tls.certresolver: 'wildcard-cloudflare'
+  # whoami:
+  #   container_name: 'whoami'
+  #   image: 'traefik/whoami'
+  #   ports:
+  #     - 80
+  #   networks:
+  #     - 'apps'
+  #     - 'proxy'
+  #   labels:
+  #     traefik.enable: 'true'
+  #     traefik.http.routers.whoami.entrypoints: 'websecure'
+  #     traefik.http.routers.whoami.rule: 'Host(`whoami.${DOMAINNAME}`)'
+  #     traefik.http.routers.whoami.tls: 'true'
+  #     traefik.http.routers.whoami.tls.certresolver: 'wildcard-cloudflare'
 
-  code-server:
-    container_name: 'code-server'
-    dns:
-      - 1.1.1.1
-    image: 'lscr.io/linuxserver/code-server'
-    restart: 'unless-stopped'
-    ports:
-      - '8443:8443'
-    networks:
-      - 'apps'
-      - 'proxy'
-    volumes:
-      - '/home/pi/Docker:/Docker'
-      - $DOCKERDIR/codeserver/config:/config
-    environment:
-      - 'PUID=1000'
-      - 'PGID=1000'
-      - 'TZ=$TZ'
-      - 'PROXY_DOMAIN=code.$DOMAINNAME'
-      - 'DEFAULT_WORKSPACE=/Docker'
-    labels:
-      traefik.enable: 'true'
-      traefik.http.routers.codeserver.entrypoints: 'websecure'
-      traefik.http.routers.codeserver.rule: 'Host(`code.$DOMAINNAME`)'
-      traefik.http.routers.codeserver.service: 'codeserver-svc'
-      traefik.http.routers.codeserver.tls: 'true'
-      traefik.http.routers.codeserver.tls.certresolver: 'wildcard-cloudflare'
-      traefik.http.services.codeserver-svc.loadbalancer.server.port: '8443'
+  # code-server:
+  #   container_name: 'code-server'
+  #   dns:
+  #     - 1.1.1.1
+  #   image: 'lscr.io/linuxserver/code-server'
+  #   restart: 'unless-stopped'
+  #   ports:
+  #     - '8443:8443'
+  #   networks:
+  #     - 'apps'
+  #     - 'proxy'
+  #   volumes:
+  #     - '/home/pi/Docker:/Docker'
+  #     - $DOCKERDIR/codeserver/config:/config
+  #   environment:
+  #     - 'PUID=1000'
+  #     - 'PGID=1000'
+  #     - 'TZ=$TZ'
+  #     - 'PROXY_DOMAIN=code.$DOMAINNAME'
+  #     - 'DEFAULT_WORKSPACE=/Docker'
+  #   labels:
+  #     traefik.enable: 'true'
+  #     traefik.http.routers.codeserver.entrypoints: 'websecure'
+  #     traefik.http.routers.codeserver.rule: 'Host(`code.$DOMAINNAME`)'
+  #     traefik.http.routers.codeserver.service: 'codeserver-svc'
+  #     traefik.http.routers.codeserver.tls: 'true'
+  #     traefik.http.routers.codeserver.tls.certresolver: 'wildcard-cloudflare'
+  #     traefik.http.services.codeserver-svc.loadbalancer.server.port: '8443'
 
 
   # ---------------------------------------------------------------------------- #
@@ -181,13 +181,11 @@ services:
     image: 'deconzcommunity/deconz'
     restart: 'always'
     dns: '1.1.1.1'
-    ports:
-      - '8089:8089'
-      - '8091:8091'
-    networks:
-      - 'apps'
-      - 'socket_proxy'
-      - 'proxy'
+    # ports:
+    #   - '8089:8089'
+    #   - '8091:8091'
+    #   - '6080:6080'
+    network_mode: host
     volumes:
       - '$DOCKERDIR/deconz:/opt/deCONZ'
     devices:
@@ -195,13 +193,12 @@ services:
     environment:
       - 'DECONZ_WEB_PORT=8089'
       - 'DECONZ_WS_PORT=8091'
+      - 'DECONZ_NOVNC_PORT=6080'
       - 'DECONZ_DEVICE=/dev/ttyACM0'
       - 'DEBUG_INFO=1'
-      - 'DEBUG_APS=0'
-      - 'DEBUG_ZCL=0'
-      - 'DEBUG_ZDP=0'
-      - 'DEBUG_OTAU=0'
       - 'TZ=$TZ'
+      - 'DECONZ_VNC_MODE=1'
+      - 'DECONZ_VNC_PASSWORD=${DECONZ_VNC_PW}'
     labels:
       traefik.enable: 'true'
       traefik.http.routers.deconz.entrypoints: 'websecure'
@@ -211,15 +208,30 @@ services:
       traefik.http.routers.deconz.tls.certresolver: 'wildcard-cloudflare'
       traefik.http.services.deconz-svc.loadbalancer.server.port: '8089'
 
-      # traefik.http.routers.deconz2.entrypoints: 'websecure'
-      # traefik.http.routers.deconz2.rule: 'Host(`deconz2.$DOMAINNAME`)'
-      # traefik.http.routers.deconz2.service: 'deconz2-svc'
-      # traefik.http.routers.deconz2.tls: 'true'
-      # traefik.http.routers.deconz2.tls.certresolver: 'wildcard-cloudflare'
-      # traefik.http.services.deconz2-svc.loadbalancer.server.port: '8091'
+  # homeassistant:
+  #   container_name: 'homeassistant'
+  #   dns: 1.1.1.1
+  #   image: 'ghcr.io/home-assistant/home-assistant:stable'
+  #   # restart: 'unless-stopped'
+  #   volumes:
+  #     - '$DOCKERDIR/homeassistant/config:/config'
+  #     - '/etc/localtime:/etc/localtime:ro'
+  #   devices:
+  #     - '/dev/ttyACM0'
+  #   network_mode: 'host'
+  #   privileged: true
+  #   environment:
+  #     - TZ=$TZ
 
-
-
+    # user: '1000:1000'
+    # labels:
+    #   traefik.enable: 'true'
+    #   traefik.http.routers.homeassistant.entrypoints: 'websecure'
+    #   traefik.http.routers.homeassistant.rule: 'Host(`hass.$DOMAINNAME`)'
+    #   traefik.http.routers.homeassistant.service: 'homeassistant-svc'
+    #   traefik.http.routers.homeassistant.tls: 'true'
+    #   traefik.http.routers.homeassistant.tls.certresolver: 'wildcard-cloudflare'
+    #   traefik.http.services.homeassistant-svc.loadbalancer.server.port: '8123'
 
   # ---------------------------------------------------------------------------- #
   #                                  Homebridge                                  #

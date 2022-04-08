@@ -1,6 +1,6 @@
 version: '3.9'
 
-# --------------------------------- Networks --------------------------------- #
+# ---------------------------- Networks & Volumes ---------------------------- #
 networks:
   proxy:
     external:
@@ -53,30 +53,30 @@ services:
   # ---------------------------------------------------------------------------- #
   #                         Glances - System Information                         #
   # ---------------------------------------------------------------------------- #
-  glances:
-    container_name: 'glances'
-    image: 'jdreinhardt/glances:release'
-    restart: 'unless-stopped'
-    networks:
-      - 'proxy'
-      - 'socket_proxy'
-      - 'apps'
-    security_opt:
-      - 'no-new-privileges:true'
-    environment:
-      DOCKER_HOST: 'tcp://socket-proxy:2375'
-      GLANCES_OPT: '-w'
-    labels:
-      traefik.docker.network: 'proxy'
-      traefik.enable: 'true'
-      traefik.http.routers.glances.entrypoints: 'websecure'
-      traefik.http.routers.glances.rule: 'Host(`glances.$DOMAINNAME`)'
-      traefik.http.routers.glances.service: 'glances-svc'
-      traefik.http.routers.glances.tls: 'true'
-      traefik.http.routers.glances.tls.certresolver: 'wildcard-cloudflare'
-      traefik.http.services.glances-svc.loadbalancer.server.port: '61208'
-    pid: 'host'
-    privileged: true
+  # glances:
+  #   container_name: 'glances'
+  #   image: 'jdreinhardt/glances:release'
+  #   restart: 'unless-stopped'
+  #   networks:
+  #     - 'proxy'
+  #     - 'socket_proxy'
+  #     - 'apps'
+  #   security_opt:
+  #     - 'no-new-privileges:true'
+  #   environment:
+  #     DOCKER_HOST: 'tcp://socket-proxy:2375'
+  #     GLANCES_OPT: '-w'
+  #   labels:
+  #     traefik.docker.network: 'proxy'
+  #     traefik.enable: 'true'
+  #     traefik.http.routers.glances.entrypoints: 'websecure'
+  #     traefik.http.routers.glances.rule: 'Host(`glances.$DOMAINNAME`)'
+  #     traefik.http.routers.glances.service: 'glances-svc'
+  #     traefik.http.routers.glances.tls: 'true'
+  #     traefik.http.routers.glances.tls.certresolver: 'wildcard-cloudflare'
+  #     traefik.http.services.glances-svc.loadbalancer.server.port: '61208'
+  #   pid: 'host'
+  #   privileged: true
 
   # ---------------------------------------------------------------------------- #
   #                     Dozzle - Real-time Docker Log Viewer                     #
@@ -106,37 +106,13 @@ services:
       traefik.http.services.dozzle-svc.loadbalancer.server.port: '8080'
 
   # ---------------------------------------------------------------------------- #
-  #                                   Cadvisor                                   #
-  # ---------------------------------------------------------------------------- #
-  # Collects information and metrics on all the containers running in the host system
-
-  # cadvisor:
-  #   image: michbeck100/cadvisor
-  #   container_name: cadvisor
-  #   command: --raw_cgroup_prefix_whitelist=/docker/ --disable_metrics=hugetlb
-  #   build:
-  #     context: .
-  #   privileged: true
-  #   volumes:
-  #     - '/:/rootfs:ro'
-  #     - '/var/run:/var/run:ro'
-  #     - '/sys:/sys:ro'
-  #     - '/var/lib/docker/:/var/lib/docker:ro'
-  #     - '/dev/disk/:/dev/disk:ro'
-  #   devices:
-  #     - '/dev/kmsg:/dev/kmsg'
-  #   restart: unless-stopped
-
-
-
-  # ---------------------------------------------------------------------------- #
   #                                  Monitoring                                  #
   # ---------------------------------------------------------------------------- #
   netdata:
     container_name: 'netdata'
     hostname: 'docker_netdata'
     image: 'netdata/netdata'
-    # restart: 'unless-stopped'
+    restart: 'unless-stopped'
     dns:
       1.1.1.1
     ports:
@@ -162,9 +138,9 @@ services:
     - 'apps'
     environment:
       - TZ=$TZ
-      - NETDATA_CLAIM_TOKEN=pp4nU8QbpQdYMhXEmpw7-1vGYXrUAjzgeqd2RrWIlaQOrPnDa7KZZC_TNdKXFTdY2wiF9xT5VigY0zUykU7mm8a3Uk9cZAVAqF4A5NLUx62Ih8VYrIZ__cCOmqUqMTJ6nzr4Bhs
+      - NETDATA_CLAIM_TOKEN=$NETDATA_CLAIM_TOKEN
       - NETDATA_CLAIM_URL=https://app.netdata.cloud
-      - NETDATA_CLAIM_ROOMS=ac071220-225b-4767-8e74-87b4f9878734
+      - NETDATA_CLAIM_ROOMS=$NETDATA_CLAIM_ROOMS
     labels:
       traefik.enable: 'true'
       traefik.http.routers.netdata.entrypoints: 'websecure'
@@ -174,6 +150,30 @@ services:
       traefik.http.routers.netdata.tls.certresolver: 'wildcard-cloudflare'
       traefik.http.services.netdata-svc.loadbalancer.server.port: '19999'
 
-
-
+  prometheus:
+    container_name: 'prometheus'
+    image: 'prom/prometheus:latest'
+    restart: 'unless-stopped'
+    ports:
+      - '9090:9090'
+    networks:
+      - 'apps'
+      - 'proxy'
+    volumes:
+      - '$DOCKERDIR/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro'
+      - 'prometheus_data:/data'
+    environment:
+      - 'TZ=$TZ'
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/data'
+    user: 'root'
+    labels:
+      traefik.enable: 'true'
+      traefik.http.routers.prometheus.entrypoints: 'websecure'
+      traefik.http.routers.prometheus.rule: 'Host(`prometheus.$DOMAINNAME`)'
+      traefik.http.routers.prometheus.service: 'prometheus-svc'
+      traefik.http.routers.prometheus.tls: 'true'
+      traefik.http.routers.prometheus.tls.certresolver: 'wildcard-cloudflare'
+      traefik.http.services.prometheus-svc.loadbalancer.server.port: '9090'
 

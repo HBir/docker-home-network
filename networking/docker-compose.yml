@@ -36,12 +36,14 @@ services:
       - '$DOCKERDIR/traefik/traefik.log:/traefik.log'
       - '$DOCKERDIR/traefik/tls-certificates:/tls-certificates'
       - '/var/run/docker.sock:/var/run/docker.sock:ro'
+  #    - '$DOCKERDIR/traefik/rules.toml:/etc/traefik/rules.toml'
     environment:
       CF_API_EMAIL: '${CF_API_EMAIL}'
       CF_API_KEY: '${CF_API_KEY}'
     command:
       - '--api.dashboard=true'
       - '--api.insecure=true'
+      - '--ping'
       - '--providers.docker=true'
       - '--entrypoints.web.address=:80'
       - '--entrypoints.websecure.address=:443'
@@ -62,7 +64,9 @@ services:
       - '--metrics.prometheus=true'
       - '--entryPoints.metrics.address=:8082'
       - '--metrics.prometheus.entryPoint=metrics'
-
+  #      - "--providers.file=true"
+  #      - "--providers.file.filename=/etc/traefik/rules.toml"
+  #      - "--providers.file.watch=true"
     labels:
       info: '(:8080)'
       traefik.enable: 'true'
@@ -73,6 +77,7 @@ services:
       traefik.http.routers.traefik.tls.certresolver: 'wildcard-cloudflare'
       traefik.http.routers.traefik.tls.domains[0].main: '${DOMAINNAME}'
       traefik.http.routers.traefik.tls.domains[0].sans: '*.${DOMAINNAME}'
+
 
   # ---------------------------------------------------------------------------- #
   #                                 Adguard Home                                 #
