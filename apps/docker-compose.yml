@@ -176,52 +176,52 @@ services:
   # ---------------------------------------------------------------------------- #
   #                     Deconz / Phoscon - Zigbee controller                     #
   # ---------------------------------------------------------------------------- #
-  deconz:
-    container_name: 'deconz'
-    image: 'deconzcommunity/deconz'
-    restart: 'always'
-    dns: '1.1.1.1'
-    # ports:
-    #   - '8089:8089'
-    #   - '8091:8091'
-    #   - '6080:6080'
-    network_mode: host
-    volumes:
-      - '$DOCKERDIR/deconz:/opt/deCONZ'
-    devices:
-      - '/dev/ttyACM0'
-    environment:
-      - 'DECONZ_WEB_PORT=8089'
-      - 'DECONZ_WS_PORT=8091'
-      - 'DECONZ_NOVNC_PORT=6080'
-      - 'DECONZ_DEVICE=/dev/ttyACM0'
-      - 'DEBUG_INFO=1'
-      - 'TZ=$TZ'
-      - 'DECONZ_VNC_MODE=1'
-      - 'DECONZ_VNC_PASSWORD=${DECONZ_VNC_PW}'
-    labels:
-      traefik.enable: 'true'
-      traefik.http.routers.deconz.entrypoints: 'websecure'
-      traefik.http.routers.deconz.rule: 'Host(`phoscon.$DOMAINNAME`)'
-      traefik.http.routers.deconz.service: 'deconz-svc'
-      traefik.http.routers.deconz.tls: 'true'
-      traefik.http.routers.deconz.tls.certresolver: 'wildcard-cloudflare'
-      traefik.http.services.deconz-svc.loadbalancer.server.port: '8089'
-
-  # homeassistant:
-  #   container_name: 'homeassistant'
-  #   dns: 1.1.1.1
-  #   image: 'ghcr.io/home-assistant/home-assistant:stable'
-  #   # restart: 'unless-stopped'
+  # deconz:
+  #   container_name: 'deconz'
+  #   image: 'deconzcommunity/deconz'
+  #   restart: 'always'
+  #   dns: '1.1.1.1'
+  #   # ports:
+  #   #   - '8089:8089'
+  #   #   - '8091:8091'
+  #   #   - '6080:6080'
+  #   network_mode: host
   #   volumes:
-  #     - '$DOCKERDIR/homeassistant/config:/config'
-  #     - '/etc/localtime:/etc/localtime:ro'
+  #     - '$DOCKERDIR/deconz:/opt/deCONZ'
   #   devices:
   #     - '/dev/ttyACM0'
-  #   network_mode: 'host'
-  #   privileged: true
   #   environment:
-  #     - TZ=$TZ
+  #     - 'DECONZ_WEB_PORT=8089'
+  #     - 'DECONZ_WS_PORT=8091'
+  #     - 'DECONZ_NOVNC_PORT=6080'
+  #     - 'DECONZ_DEVICE=/dev/ttyACM0'
+  #     - 'DEBUG_INFO=1'
+  #     - 'TZ=$TZ'
+  #     - 'DECONZ_VNC_MODE=1'
+  #     - 'DECONZ_VNC_PASSWORD=${DECONZ_VNC_PW}'
+  #   labels:
+  #     traefik.enable: 'true'
+  #     traefik.http.routers.deconz.entrypoints: 'websecure'
+  #     traefik.http.routers.deconz.rule: 'Host(`phoscon.$DOMAINNAME`)'
+  #     traefik.http.routers.deconz.service: 'deconz-svc'
+  #     traefik.http.routers.deconz.tls: 'true'
+  #     traefik.http.routers.deconz.tls.certresolver: 'wildcard-cloudflare'
+  #     traefik.http.services.deconz-svc.loadbalancer.server.port: '8089'
+
+  homeassistant:
+    container_name: 'homeassistant'
+    dns: 1.1.1.1
+    image: 'ghcr.io/home-assistant/home-assistant:stable'
+    # restart: 'unless-stopped'
+    volumes:
+      - '$DOCKERDIR/homeassistant/config:/config'
+      - '/etc/localtime:/etc/localtime:ro'
+    devices:
+      - '/dev/ttyACM0'
+    network_mode: 'host'
+    privileged: true
+    environment:
+      - TZ=$TZ
 
     # user: '1000:1000'
     # labels:
