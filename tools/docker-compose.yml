@@ -28,6 +28,8 @@ services:
     container_name: 'portainer'
     image: 'portainer/portainer-ce:latest'
     restart: 'unless-stopped'
+    ports:
+      - '9000:9000'
     networks:
       - 'proxy'
       - 'socket_proxy'
@@ -81,29 +83,29 @@ services:
   # ---------------------------------------------------------------------------- #
   #                     Dozzle - Real-time Docker Log Viewer                     #
   # ---------------------------------------------------------------------------- #
-  dozzle:
-    container_name: 'dozzle'
-    image: 'amir20/dozzle:latest'
-    restart: 'unless-stopped'
-    networks:
-      - 'proxy'
-      - 'socket_proxy'
-      - 'apps'
-    security_opt:
-      - 'no-new-privileges:true'
-    environment:
-      DOCKER_HOST: 'tcp://socket-proxy:2375'
-      DOZZLE_FILTER: 'status=running'
-      DOZZLE_LEVEL: 'info'
-      DOZZLE_TAILSIZE: 300
-    labels:
-      traefik.enable: 'true'
-      traefik.http.routers.dozzle.entrypoints: 'websecure'
-      traefik.http.routers.dozzle.rule: 'Host(`dozzle.$DOMAINNAME`)'
-      traefik.http.routers.dozzle.service: 'dozzle-svc'
-      traefik.http.routers.dozzle.tls: 'true'
-      traefik.http.routers.dozzle.tls.certresolver: 'wildcard-cloudflare'
-      traefik.http.services.dozzle-svc.loadbalancer.server.port: '8080'
+  # dozzle:
+  #   container_name: 'dozzle'
+  #   image: 'amir20/dozzle:latest'
+  #   restart: 'unless-stopped'
+  #   networks:
+  #     - 'proxy'
+  #     - 'socket_proxy'
+  #     - 'apps'
+  #   security_opt:
+  #     - 'no-new-privileges:true'
+  #   environment:
+  #     DOCKER_HOST: 'tcp://socket-proxy:2375'
+  #     DOZZLE_FILTER: 'status=running'
+  #     DOZZLE_LEVEL: 'info'
+  #     DOZZLE_TAILSIZE: 300
+  #   labels:
+  #     traefik.enable: 'true'
+  #     traefik.http.routers.dozzle.entrypoints: 'websecure'
+  #     traefik.http.routers.dozzle.rule: 'Host(`dozzle.$DOMAINNAME`)'
+  #     traefik.http.routers.dozzle.service: 'dozzle-svc'
+  #     traefik.http.routers.dozzle.tls: 'true'
+  #     traefik.http.routers.dozzle.tls.certresolver: 'wildcard-cloudflare'
+  #     traefik.http.services.dozzle-svc.loadbalancer.server.port: '8080'
 
   # ---------------------------------------------------------------------------- #
   #                                  Monitoring                                  #
@@ -180,21 +182,21 @@ services:
   # ---------------------------------------------------------------------------- #
   #                                     Homer                                    #
   # ---------------------------------------------------------------------------- #
-  homer:
-    container_name: 'homer'
-    image: 'b4bz/homer:latest'
-    ports:
-      - 9643:8080
-    networks:
-      - 'apps'
-      - 'proxy'
-    volumes:
-      - '$DOCKERDIR/homer:/www/assets'
-    labels:
-      traefik.enable: 'true'
-      traefik.http.routers.homer.entrypoints: 'websecure'
-      traefik.http.routers.homer.rule: 'Host(`homer.$DOMAINNAME`)'
-      traefik.http.routers.homer.service: 'homer-svc'
-      traefik.http.routers.homer.tls: 'true'
-      traefik.http.routers.homer.tls.certresolver: 'wildcard-cloudflare'
-      traefik.http.services.homer-svc.loadbalancer.server.port: '8080'
+  # homer:
+  #   container_name: 'homer'
+  #   image: 'b4bz/homer:latest'
+  #   ports:
+  #     - 9643:8080
+  #   networks:
+  #     - 'apps'
+  #     - 'proxy'
+  #   volumes:
+  #     - '$DOCKERDIR/homer:/www/assets'
+  #   labels:
+  #     traefik.enable: 'true'
+  #     traefik.http.routers.homer.entrypoints: 'websecure'
+  #     traefik.http.routers.homer.rule: 'Host(`homer.$DOMAINNAME`)'
+  #     traefik.http.routers.homer.service: 'homer-svc'
+  #     traefik.http.routers.homer.tls: 'true'
+  #     traefik.http.routers.homer.tls.certresolver: 'wildcard-cloudflare'
+  #     traefik.http.services.homer-svc.loadbalancer.server.port: '8080'

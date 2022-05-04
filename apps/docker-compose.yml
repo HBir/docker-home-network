@@ -87,7 +87,7 @@ services:
   #     - '8.8.8.8'
   #   ports:
   #     - '32400:32400'
-  #     - '1900:1900/udp'
+  #     - '1901:1900/udp'
   #     - '3005:3005'
   #     - '5353/udp'
   #     - '8324:8324'
@@ -125,6 +125,44 @@ services:
   #     traefik.http.routers.plex.service: 'noop@internal'
   #     traefik.http.routers.plex.tls: 'true'
   #     traefik.http.routers.plex.tls.certresolver: 'wildcard-cloudflare'
+
+  jellyfin:
+    image: lscr.io/linuxserver/jellyfin
+    container_name: jellyfin
+    dns:
+      1.1.1.1
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=$TZ
+      - JELLYFIN_PublishedServerUrl=10.1.0.9 #optional
+    volumes:
+      - '${EXT_MOUNT_POINT}/Server/jellyfin/config:/config'
+      - '${EXT_MOUNT_POINT}/Server/TV series:/data/tvshows'
+      - '${EXT_MOUNT_POINT}/Server/Movies:/data/movies'
+      - '${EXT_MOUNT_POINT}/Server/Music:/data/music'
+      - '${EXT_MOUNT_POINT}/Server/Audiobooks:/data/audiobooks'
+      - '${EXT_MOUNT_POINT}/Server/Other:/data/other'
+      - '${EXT_MOUNT_POINT}/Torrents/complete:/data/new_dl'
+    networks:
+      - 'apps'
+      - 'proxy'
+    ports:
+      - 8096:8096
+      # - 8920:8920 #optional
+      - 7359:7359/udp #optional
+      - 1902:1900/udp #optional
+    restart: unless-stopped
+    labels:
+      traefik.enable: 'true'
+      traefik.http.routers.jellyfin.entrypoints: 'websecure'
+      traefik.http.routers.jellyfin.rule: 'Host(`jellyfin.${DOMAINNAME}`)'
+      traefik.http.routers.jellyfin.tls: 'true'
+      traefik.http.routers.jellyfin.service: 'jellyfin-svc'
+      traefik.http.routers.jellyfin.tls.certresolver: 'wildcard-cloudflare'
+      traefik.http.services.jellyfin-svc.loadbalancer.server.port: '8096'
+
+
 
   # ---------------------------------------------------------------------------- #
   #                               Whoami (http test)                              #
@@ -180,7 +218,7 @@ services:
   mqtt:
     container_name: 'mosquitto'
     image: 'eclipse-mosquitto:2.0'
-    # restart: 'unless-stopped'
+    restart: 'unless-stopped'
     ports:
       - '1883:1883'
       - '9001:9001'
@@ -228,7 +266,7 @@ services:
     container_name: 'homeassistant'
     dns: 1.1.1.1
     image: 'ghcr.io/home-assistant/home-assistant:stable'
-    # restart: 'unless-stopped'
+    restart: 'unless-stopped'
     volumes:
       - '$DOCKERDIR/homeassistant/config:/config'
       - '/etc/localtime:/etc/localtime:ro'

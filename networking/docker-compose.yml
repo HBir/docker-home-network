@@ -27,7 +27,7 @@ services:
     ports:
       - '80:80'
       - '443:443'
-      - '8080:8080'
+      - '8090:8080'
     networks:
       - 'socket_proxy'
       - 'proxy'
@@ -87,6 +87,9 @@ services:
     container_name: 'adguard'
     image: 'adguard/adguardhome'
     restart: 'unless-stopped'
+    dns:
+      - '127.0.0.1'
+      - '1.1.1.1'
     ports:
       - '53:53/tcp'
       - '53:53/udp'
@@ -101,8 +104,8 @@ services:
     volumes:
       - './adguard-work:/opt/adguardhome/work'
       - './adguard-conf:/opt/adguardhome/conf'
+      - './adguard-resolved:/etc/systemd/resolved.conf.d'
     labels:
-      info: '(:81)'
       traefik.enable: 'true'
       traefik.http.routers.adguard.entrypoints: 'websecure'
       traefik.http.routers.adguard.rule: 'Host(`adguard.${DOMAINNAME}`)'
@@ -160,36 +163,64 @@ services:
   # ---------------------------------------------------------------------------- #
   #                              VPN Server & Client                             #
   # ---------------------------------------------------------------------------- #
-  vpn-server:
-    image: linuxserver/wireguard
-    container_name: wireguard
-    #   dns:
-    #- 10.0.92.33 # Points to pihole
-    #- 10.0.92.22 # Points to unbound
-    cap_add:
-      - NET_ADMIN
-      - SYS_MODULE
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=${TZ}
-      - ALLOWEDIPS=10.1.0.0/24
-      - SERVERURL=${VPN_URL} #optional
-      - SERVERPORT=51820 #optional
-      - PEERS=2 #optional
-  #    - PEERDNS=10.0.92.33 #${SERVER_IP} #optional
-      # - INTERNAL_SUBNET=10.13.13.0 #optional
-    networks:
-      proxy:
-      apps:
-    volumes:
-      - $DOCKERDIR/wireguard/config:/config
-      - /lib/modules:/lib/modules
+  wireguard:
+    container_name: 'wireguard'
+    image: 'linuxserver/wireguard'
+    restart: 'unless-stopped'
     ports:
-      - 51820:51820/udp
-    sysctls:
-      - net.ipv4.conf.all.src_valid_mark=1
-    restart: unless-stopped
+      - '51820:51820/udp'
+    cap_add:
+      - 'NET_ADMIN'
+      - 'SYS_MODULE'
+    networks:
+      apps: null
+      proxy: null
+    volumes:
+      - '$DOCKERDIR/wireguard/config:/config'
+      - '/lib/modules:/lib/modules'
+    environment:
+      - 'PUID=1000'
+      - 'PGID=1000'
+      - 'TZ=$TZ'
+      - 'SERVERPORT=51820'
+      - 'SERVERURL=ypro.asuscomm.com'
+      - 'PEERS=3'
+      - 'PEERDNS=10.0.92.33'
+      - 'INTERNAL_SUBNET=10.6.0.0'
+    depends_on: ['adguardhome']
+  # vpn-server:
+  #   image: linuxserver/wireguard
+  #   container_name: wireguard
+  #   #   dns:
+  #   #- 10.0.92.33 # Points to pihole
+  #   #- 10.0.92.22 # Points to unbound
+  #   cap_add:
+  #     - NET_ADMIN
+  #     - SYS_MODULE
+  #   environment:
+  #     - PUID=1000
+  #     - PGID=1000
+  #     - TZ=${TZ}
+  #     - ALLOWEDIPS=0.0.0.0/0
+  #     - SERVERURL=ypro.asuscomm.com #optional
+  #     - SERVERPORT=51820 #optional
+  #     - PEERS=2 #optional
+  #     - PEERDNS=auto
+  # #    - PEERDNS=10.0.92.33 #${SERVER_IP} #optional
+  #     # - INTERNAL_SUBNET=10.13.13.0 #optional
+  #   networks:
+  #     proxy:
+  #     apps:
+  #   sysctls:
+  #     - net.ipv4.conf.all.src_valid_mark=1
+  #   volumes:
+  #     - $DOCKERDIR/wireguard/config:/config
+  #     - /lib/modules:/lib/modules
+  #   ports:
+  #     - 51820:51820/udp
+  #   sysctls:
+  #     - net.ipv4.conf.all.src_valid_mark=1
+  #   restart: unless-stopped
 
   # vpn-client:
   #   image: ghcr.io/bubuntux/nordlynx
