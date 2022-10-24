@@ -188,39 +188,6 @@ services:
       - 'PEERDNS=10.0.92.33'
       - 'INTERNAL_SUBNET=10.6.0.0'
     depends_on: ['adguardhome']
-  # vpn-server:
-  #   image: linuxserver/wireguard
-  #   container_name: wireguard
-  #   #   dns:
-  #   #- 10.0.92.33 # Points to pihole
-  #   #- 10.0.92.22 # Points to unbound
-  #   cap_add:
-  #     - NET_ADMIN
-  #     - SYS_MODULE
-  #   environment:
-  #     - PUID=1000
-  #     - PGID=1000
-  #     - TZ=${TZ}
-  #     - ALLOWEDIPS=0.0.0.0/0
-  #     - SERVERURL=ypro.asuscomm.com #optional
-  #     - SERVERPORT=51820 #optional
-  #     - PEERS=2 #optional
-  #     - PEERDNS=auto
-  # #    - PEERDNS=10.0.92.33 #${SERVER_IP} #optional
-  #     # - INTERNAL_SUBNET=10.13.13.0 #optional
-  #   networks:
-  #     proxy:
-  #     apps:
-  #   sysctls:
-  #     - net.ipv4.conf.all.src_valid_mark=1
-  #   volumes:
-  #     - $DOCKERDIR/wireguard/config:/config
-  #     - /lib/modules:/lib/modules
-  #   ports:
-  #     - 51820:51820/udp
-  #   sysctls:
-  #     - net.ipv4.conf.all.src_valid_mark=1
-  #   restart: unless-stopped
 
   # vpn-client:
   #   image: ghcr.io/bubuntux/nordlynx

@@ -1,0 +1,172 @@
+square: false
+columns: 4
+type: grid
+cards:
+  - type: picture
+    image: /local/snapshot_1.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_1.jpg
+  - type: picture
+    image: /local/snapshot_2.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_2.jpg
+  - type: picture
+    image: /local/snapshot_3.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_3.jpg
+  - type: picture
+    image: /local/snapshot_4.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_4.jpg
+  - type: picture
+    image: /local/snapshot_5.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_5.jpg
+  - type: picture
+    image: /local/snapshot_6.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_6.jpg
+  - type: picture
+    image: /local/snapshot_7.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_7.jpg
+  - type: picture
+    image: /local/snapshot_8.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_8.jpg
+  - type: picture
+    image: /local/snapshot_9.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_9.jpg
+  - type: picture
+    image: /local/snapshot_10.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_10.jpg
+  - type: picture
+    image: /local/snapshot_11.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_11.jpg
+  - type: picture
+    image: /local/snapshot_12.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_12.jpg
+  - type: picture
+    image: /local/snapshot_13.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_13.jpg
+  - type: picture
+    image: /local/snapshot_14.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_14.jpg
+  - type: picture
+    image: /local/snapshot_15.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_15.jpg
+  - type: picture
+    image: /local/snapshot_16.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_16.jpg
+  - type: picture
+    image: /local/snapshot_17.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_17.jpg
+  - type: picture
+    image: /local/snapshot_18.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_18.jpg
+  - type: picture
+    image: /local/snapshot_19.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_19.jpg
+  - type: picture
+    image: /local/snapshot_20.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_20.jpg
+  - type: picture
+    image: /local/snapshot_21.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_21.jpg
+  - type: picture
+    image: /local/snapshot_22.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_22.jpg
+  - type: picture
+    image: /local/snapshot_23.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_23.jpg
+  - type: picture
+    image: /local/snapshot_0.jpg
+    hold_action:
+      action: none
+    tap_action:
+      action: url
+      url_path: /local/snapshot_0.jpg
