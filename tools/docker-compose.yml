@@ -56,47 +56,47 @@ services:
   # ---------------------------------------------------------------------------- #
   #                                  Monitoring                                  #
   # ---------------------------------------------------------------------------- #
-  netdata:
-    container_name: 'netdata'
-    hostname: 'docker_netdata'
-    image: 'netdata/netdata'
-    restart: 'unless-stopped'
-    dns:
-      1.1.1.1
-    ports:
-      - '19999:19999'
-    cap_add:
-      - 'SYS_PTRACE'
-    security_opt:
-      - 'apparmor:unconfined'
-    volumes:
-      - 'netdataconfig:/etc/netdata'
-      - 'netdatalib:/var/lib/netdata'
-      - 'netdatacache:/var/cache/netdata'
-      - '/etc/passwd:/host/etc/passwd:ro'
-      - '/etc/group:/host/etc/group:ro'
-      - '/proc:/host/proc:ro'
-      - '/sys:/host/sys:ro'
-      - '/etc/os-release:/host/etc/os-release:ro'
-      - '/var/lib/docker/:/var/lib/docker:ro'
-      - '/var/run/docker.sock:/var/run/docker.sock:ro'
-    networks:
-    - 'proxy'
-    - 'socket_proxy'
-    - 'apps'
-    environment:
-      - TZ=$TZ
-      - NETDATA_CLAIM_TOKEN=$NETDATA_CLAIM_TOKEN
-      - NETDATA_CLAIM_URL=https://app.netdata.cloud
-      - NETDATA_CLAIM_ROOMS=$NETDATA_CLAIM_ROOMS
-    labels:
-      traefik.enable: 'true'
-      traefik.http.routers.netdata.entrypoints: 'websecure'
-      traefik.http.routers.netdata.rule: 'Host(`netdata.$DOMAINNAME`)'
-      traefik.http.routers.netdata.service: 'netdata-svc'
-      traefik.http.routers.netdata.tls: 'true'
-      traefik.http.routers.netdata.tls.certresolver: 'wildcard-cloudflare'
-      traefik.http.services.netdata-svc.loadbalancer.server.port: '19999'
+  # netdata:
+  #   container_name: 'netdata'
+  #   hostname: 'docker_netdata'
+  #   image: 'netdata/netdata'
+  #   restart: 'unless-stopped'
+  #   dns:
+  #     1.1.1.1
+  #   ports:
+  #     - '19999:19999'
+  #   cap_add:
+  #     - 'SYS_PTRACE'
+  #   security_opt:
+  #     - 'apparmor:unconfined'
+  #   volumes:
+  #     - 'netdataconfig:/etc/netdata'
+  #     - 'netdatalib:/var/lib/netdata'
+  #     - 'netdatacache:/var/cache/netdata'
+  #     - '/etc/passwd:/host/etc/passwd:ro'
+  #     - '/etc/group:/host/etc/group:ro'
+  #     - '/proc:/host/proc:ro'
+  #     - '/sys:/host/sys:ro'
+  #     - '/etc/os-release:/host/etc/os-release:ro'
+  #     - '/var/lib/docker/:/var/lib/docker:ro'
+  #     - '/var/run/docker.sock:/var/run/docker.sock:ro'
+  #   networks:
+  #   - 'proxy'
+  #   - 'socket_proxy'
+  #   - 'apps'
+  #   environment:
+  #     - TZ=$TZ
+  #     - NETDATA_CLAIM_TOKEN=$NETDATA_CLAIM_TOKEN
+  #     - NETDATA_CLAIM_URL=https://app.netdata.cloud
+  #     - NETDATA_CLAIM_ROOMS=$NETDATA_CLAIM_ROOMS
+  #   labels:
+  #     traefik.enable: 'true'
+  #     traefik.http.routers.netdata.entrypoints: 'websecure'
+  #     traefik.http.routers.netdata.rule: 'Host(`netdata.$DOMAINNAME`)'
+  #     traefik.http.routers.netdata.service: 'netdata-svc'
+  #     traefik.http.routers.netdata.tls: 'true'
+  #     traefik.http.routers.netdata.tls.certresolver: 'wildcard-cloudflare'
+  #     traefik.http.services.netdata-svc.loadbalancer.server.port: '19999'
 
   prometheus:
     container_name: 'prometheus'
