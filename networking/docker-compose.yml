@@ -1,6 +1,9 @@
 version: '3.9'
 
 # --------------------------------- Networks --------------------------------- #
+# docker network create --gateway 10.0.90.1 --subnet 10.0.90.0/24 proxy
+# docker network create --gateway 10.0.91.1 --subnet 10.0.91.0/24 --internal socket_proxy
+# docker network create --gateway 10.0.92.1 --subnet 10.0.92.0/24 apps
 networks:
   proxy:
     external:
@@ -40,6 +43,8 @@ services:
     environment:
       CF_API_EMAIL: '${CF_API_EMAIL}'
       CF_API_KEY: '${CF_API_KEY}'
+    extra_hosts:
+      - host.docker.internal:172.17.0.1
     command:
       - '--api.dashboard=true'
       - '--api.insecure=true'
@@ -48,7 +53,6 @@ services:
       - '--entrypoints.web.address=:80'
       - '--entrypoints.websecure.address=:443'
       - '--providers.docker.exposedbydefault=false'
-      - '--pilot.token=$PILOT_TOKEN'
       - '--providers.docker.network=proxy'
       - '--accessLog=true'
       - '--accessLog.filePath=/traefik.log'
@@ -68,16 +72,16 @@ services:
   #      - "--providers.file=true"
   #      - "--providers.file.filename=/etc/traefik/rules.toml"
   #      - "--providers.file.watch=true"
-    labels:
-      info: '(:8080)'
-      traefik.enable: 'true'
-      traefik.http.routers.traefik.entrypoints: 'websecure'
-      traefik.http.routers.traefik.rule: 'Host(`traefik.${DOMAINNAME}`)'
-      traefik.http.routers.traefik.service: 'api@internal'
-      traefik.http.routers.traefik.tls: 'true'
-      traefik.http.routers.traefik.tls.certresolver: 'wildcard-cloudflare'
-      traefik.http.routers.traefik.tls.domains[0].main: '${DOMAINNAME}'
-      traefik.http.routers.traefik.tls.domains[0].sans: '*.${DOMAINNAME}'
+    # labels:
+    #   info: '(:8080)'
+    #   traefik.enable: 'true'
+    #   traefik.http.routers.traefik.entrypoints: 'websecure'
+    #   traefik.http.routers.traefik.rule: 'Host(`traefik.${DOMAINNAME}`)'
+    #   traefik.http.routers.traefik.service: 'api@internal'
+    #   traefik.http.routers.traefik.tls: 'true'
+    #   traefik.http.routers.traefik.tls.certresolver: 'wildcard-cloudflare'
+    #   traefik.http.routers.traefik.tls.domains[0].main: '${VPN_URL}'
+    #   traefik.http.routers.traefik.tls.domains[0].sans: '*.${VPN_URL}'
 
 
   # ---------------------------------------------------------------------------- #
@@ -105,13 +109,13 @@ services:
       - './adguard-work:/opt/adguardhome/work'
       - './adguard-conf:/opt/adguardhome/conf'
       - './adguard-resolved:/etc/systemd/resolved.conf.d'
-    labels:
-      traefik.enable: 'true'
-      traefik.http.routers.adguard.entrypoints: 'websecure'
-      traefik.http.routers.adguard.rule: 'Host(`adguard.${DOMAINNAME}`)'
-      traefik.http.routers.adguard.tls: 'true'
-      traefik.http.routers.adguard.tls.certresolver: 'wildcard-cloudflare'
-      traefik.http.services.adguard.loadBalancer.server.port: '80'
+    # labels:
+    #   traefik.enable: 'true'
+    #   traefik.http.routers.adguard.entrypoints: 'websecure'
+    #   traefik.http.routers.adguard.rule: 'Host(`adguard.${DOMAINNAME}`)'
+    #   traefik.http.routers.adguard.tls: 'true'
+    #   traefik.http.routers.adguard.tls.certresolver: 'wildcard-cloudflare'
+    #   traefik.http.services.adguard.loadBalancer.server.port: '80'
 
   # ---------------------------------------------------------------------------- #
   #       Docker Socket Proxy - Security Enchanced Proxy for Docker Socket       #
@@ -179,11 +183,11 @@ services:
       - '$DOCKERDIR/wireguard/config:/config'
       - '/lib/modules:/lib/modules'
     environment:
-      - 'PUID=1000'
-      - 'PGID=1000'
+      - 'PUID=1001'
+      - 'PGID=1001'
       - 'TZ=$TZ'
       - 'SERVERPORT=51820'
-      - 'SERVERURL=ypro.asuscomm.com'
+      - 'SERVERURL=hbir.asuscomm.com'
       - 'PEERS=3'
       - 'PEERDNS=10.0.92.33'
       - 'INTERNAL_SUBNET=10.6.0.0'

@@ -42,15 +42,15 @@ services:
       - '/:/host'
     environment:
       - 'TZ=$TZ'
-    labels:
-      traefik.docker.network: 'proxy'
-      traefik.enable: 'true'
-      traefik.http.routers.portainer.entrypoints: 'websecure'
-      traefik.http.routers.portainer.rule: 'Host(`portainer.$DOMAINNAME`)'
-      traefik.http.routers.portainer.service: 'portainer-svc'
-      traefik.http.routers.portainer.tls: 'true'
-      traefik.http.routers.portainer.tls.certresolver: 'wildcard-cloudflare'
-      traefik.http.services.portainer-svc.loadbalancer.server.port: '9000'
+    # labels:
+    #   traefik.docker.network: 'proxy'
+    #   traefik.enable: 'true'
+    #   traefik.http.routers.portainer.entrypoints: 'websecure'
+    #   traefik.http.routers.portainer.rule: 'Host(`portainer.$DOMAINNAME`)'
+    #   traefik.http.routers.portainer.service: 'portainer-svc'
+    #   traefik.http.routers.portainer.tls: 'true'
+    #   traefik.http.routers.portainer.tls.certresolver: 'wildcard-cloudflare'
+    #   traefik.http.services.portainer-svc.loadbalancer.server.port: '9000'
 
 
   # ---------------------------------------------------------------------------- #
@@ -116,11 +116,11 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/data'
     user: 'root'
-    labels:
-      traefik.enable: 'true'
-      traefik.http.routers.prometheus.entrypoints: 'websecure'
-      traefik.http.routers.prometheus.rule: 'Host(`prometheus.$DOMAINNAME`)'
-      traefik.http.routers.prometheus.service: 'prometheus-svc'
-      traefik.http.routers.prometheus.tls: 'true'
-      traefik.http.routers.prometheus.tls.certresolver: 'wildcard-cloudflare'
-      traefik.http.services.prometheus-svc.loadbalancer.server.port: '9090'
+    # labels:
+    #   traefik.enable: 'true'
+    #   traefik.http.routers.prometheus.entrypoints: 'websecure'
+    #   traefik.http.routers.prometheus.rule: 'Host(`prometheus.$DOMAINNAME`)'
+    #   traefik.http.routers.prometheus.service: 'prometheus-svc'
+    #   traefik.http.routers.prometheus.tls: 'true'
+    #   traefik.http.routers.prometheus.tls.certresolver: 'wildcard-cloudflare'
+    #   traefik.http.services.prometheus-svc.loadbalancer.server.port: '9090'
